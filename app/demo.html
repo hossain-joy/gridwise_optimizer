@@ -210,7 +210,7 @@
             <span>Energy Dispatch Dashboard</span>
             <span id="currentScenarioBadge" class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">SAMPLE-01</span>
           </h2>
-          <p class="text-xs text-slate-500 mt-0.5">Optimizing 24-hour smart campus energy dispatch with natural language directives and physical linear constraints.</p>
+          <p id="planSummaryText" class="text-xs text-slate-500 mt-0.5">Optimizing 24-hour smart campus energy dispatch with natural language directives and physical linear constraints.</p>
         </div>
         <div id="liveStatusBadge" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -2224,6 +2224,10 @@
         }
 
         lastOptimizationResult = data;
+
+        if (data.plan_summary) {
+          document.getElementById('planSummaryText').innerText = data.plan_summary;
+        }
 
         // 1. Update Metric Cards
         document.getElementById('kpiCost').innerText = data.total_cost_bdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
