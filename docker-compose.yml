@@ -1,0 +1,23 @@
+﻿version: "3.8"
+
+services:
+  gridwise-optimizer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gridwise-optimizer:latest
+    container_name: gridwise-optimizer
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
