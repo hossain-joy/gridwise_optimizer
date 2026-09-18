@@ -1,94 +1,605 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GridWise Energy Optimizer Demo</title>
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background: #f9f9f9; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 200px; font-family: monospace; }
-        button { background: #007bff; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; margin-top: 10px; }
-        button:hover { background: #0056b3; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f2f2f2; }
-        .result { margin-top: 20px; padding: 10px; background: #eef; border-radius: 4px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GridWise Energy Optimizer</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    pre, code { font-family: 'JetBrains Mono', monospace; }
+  </style>
 </head>
-<body>
-    <div class="container">
-        <h2>GridWise Optimizer Demo</h2>
-        <p>Paste scenario JSON here or click "Run Optimization" for a test payload.</p>
-        <textarea id="payload"></textarea>
-        <button onclick="run()">Run Optimization</button>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
 
-        <div id="loading" style="display:none; margin-top:10px;">Processing...</div>
-
-        <div id="output" style="display:none;">
-            <div class="result">
-                <strong>Cost:</strong> BDT <span id="cost"></span> | 
-                <strong>Total Grid:</strong> <span id="grid"></span> kWh |
-                <strong>Peak Grid:</strong> <span id="peak"></span> kWh
-            </div>
-            
-            <h3>Directive Interpretation</h3>
-            <table id="directives">
-                <tr><th>Note Index</th><th>Applies</th><th>Type</th><th>Explanation</th></tr>
-            </table>
-
-            <h3>Hourly Plan</h3>
-            <table id="plan">
-                <tr><th>Hour</th><th>Grid</th><th>Solar Used</th><th>Battery Action</th><th>Battery (kWh)</th><th>Battery After (kWh)</th></tr>
-            </table>
+  <!-- Header -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-emerald-500/20">
+          ⚡
         </div>
+        <div>
+          <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">GridWise</span>
+          <span class="text-xs text-emerald-400 font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 ml-2">v2.0 Live</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 text-sm">
+        <div id="healthBadge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>API Online</span>
+        </div>
+        <a href="/docs" target="_blank" class="text-slate-400 hover:text-white transition-colors">Swagger API</a>
+        <a href="https://github.com/hossain-joy/gridwise_optimizer" target="_blank" class="text-slate-400 hover:text-white transition-colors">GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+
+    <!-- Top Hero / Description -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/40 p-6 rounded-2xl border border-slate-800">
+      <div>
+        <h1 class="text-2xl font-bold text-white tracking-tight">Smart Campus 24-Hour Energy Optimizer</h1>
+        <p class="text-slate-400 text-sm mt-1">LLM-assisted operator directive interpretation with Coin-OR CBC Linear Programming optimization.</p>
+      </div>
+      <!-- Preset Selector -->
+      <div class="flex flex-wrap items-center gap-3">
+        <label for="presetSelect" class="text-xs font-semibold uppercase tracking-wider text-slate-400">Select Preset:</label>
+        <select id="presetSelect" onchange="loadPreset(this.value)" class="bg-slate-800 border border-slate-700 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+          <option value="SAMPLE-01">SAMPLE-01: Solar Cleaning + Distractor</option>
+          <option value="SAMPLE-02">SAMPLE-02: Battery Charging Maintenance</option>
+          <option value="SAMPLE-03">SAMPLE-03: Emergency Reserve %</option>
+          <option value="SAMPLE-04">SAMPLE-04: No-Discharge Protection Test</option>
+          <option value="SAMPLE-05">SAMPLE-05: Temporary Feeder Grid Cap</option>
+          <option value="SAMPLE-06">SAMPLE-06: Multiple Notes with Distractor</option>
+          <option value="SAMPLE-07">SAMPLE-07: Reserve + Transformer Cap</option>
+          <option value="SAMPLE-08">SAMPLE-08: Separate Outages</option>
+          <option value="SAMPLE-09">SAMPLE-09: Reduction Normalization</option>
+          <option value="SAMPLE-10">SAMPLE-10: Multi-Constraint Evening</option>
+          <option value="CUSTOM">Custom Scenario (JSON)</option>
+        </select>
+        <button onclick="runOptimization()" id="runBtn" class="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold px-5 py-2 rounded-xl text-sm shadow-lg shadow-emerald-500/25 transition-all flex items-center gap-2">
+          <span>⚡ Optimize Schedule</span>
+        </button>
+      </div>
     </div>
 
-    <script>
-        // Sample payload
-        const sample = {
-            "scenario_id": "demo_scenario",
-            "operator_notes": ["Reduce solar to 50% between 13:00 and 15:00"],
-            "hours": Array.from({length: 24}, (_, i) => ({
-                hour: i, demand_kwh: 100, solar_kwh: (i>=8 && i<=16) ? 100 : 0, tariff_bdt_per_kwh: (i>=18 && i<=22) ? 20 : 10
-            })),
-            "battery": { capacity_kwh: 500, initial_energy_kwh: 200, minimum_energy_kwh: 50, max_charge_kwh_per_hour: 100, max_discharge_kwh_per_hour: 100 }
-        };
-        document.getElementById('payload').value = JSON.stringify(sample, null, 2);
+    <!-- Configuration & Notes Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Operator Notes -->
+      <div class="lg:col-span-2 bg-slate-900/60 rounded-2xl p-5 border border-slate-800 flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+              <span>📝</span> Operator Shift Notes (Natural Language Directives)
+            </h2>
+            <span class="text-xs text-slate-500">Processed by LLM with Heuristic Fallback</span>
+          </div>
+          <div id="notesContainer" class="mt-3 space-y-2">
+            <!-- Dynamic note inputs -->
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
+          <span>Editable notes for live scenario experimentation.</span>
+          <button onclick="toggleJsonEditor()" class="text-emerald-400 hover:underline">Toggle Raw JSON Payload</button>
+        </div>
+      </div>
 
-        async function run() {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('output').style.display = 'none';
-            try {
-                const payload = JSON.parse(document.getElementById('payload').value);
-                const res = await fetch('/optimize-energy', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                
-                if(!res.ok) { alert(JSON.stringify(data)); return; }
+      <!-- Battery Parameters -->
+      <div class="bg-slate-900/60 rounded-2xl p-5 border border-slate-800 space-y-4">
+        <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <span>🔋</span> Battery ESS Parameters
+        </h2>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+            <span class="text-slate-400 block">Capacity</span>
+            <span id="batCap" class="text-base font-bold text-white">500 kWh</span>
+          </div>
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+            <span class="text-slate-400 block">Initial Energy</span>
+            <span id="batInit" class="text-base font-bold text-white">200 kWh</span>
+          </div>
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+            <span class="text-slate-400 block">Base Min Reserve</span>
+            <span id="batMin" class="text-base font-bold text-white">50 kWh</span>
+          </div>
+          <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+            <span class="text-slate-400 block">Max Charge/Discharge</span>
+            <span id="batRate" class="text-base font-bold text-white">100 kW</span>
+          </div>
+        </div>
+        <div class="text-xs text-slate-500 flex items-center gap-1.5">
+          <span>⚖️</span> Neutrality Constraint: SoC at hour 23 must equal initial SoC.
+        </div>
+      </div>
 
-                document.getElementById('cost').innerText = data.total_cost_bdt;
-                document.getElementById('grid').innerText = data.total_grid_kwh;
-                document.getElementById('peak').innerText = data.peak_grid_kwh;
+    </div>
 
-                const dirTable = document.getElementById('directives');
-                dirTable.innerHTML = '<tr><th>Note Index</th><th>Applies</th><th>Type</th><th>Explanation</th></tr>' + 
-                    data.directive_interpretation.map(d => `<tr><td>${d.note_index}</td><td>${d.applies}</td><td>${d.directive_type}</td><td>${d.explanation}</td></tr>`).join('');
+    <!-- Collapsible Raw JSON Editor -->
+    <div id="jsonEditorSection" class="hidden bg-slate-900/80 rounded-2xl p-5 border border-slate-800 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-slate-300">Raw JSON Payload (POST /optimize-energy)</h3>
+        <button onclick="toggleJsonEditor()" class="text-xs text-slate-400 hover:text-white">Close</button>
+      </div>
+      <textarea id="rawPayloadJson" rows="8" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-emerald-400 font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"></textarea>
+    </div>
 
-                const planTable = document.getElementById('plan');
-                planTable.innerHTML = '<tr><th>Hour</th><th>Grid</th><th>Solar Used</th><th>Battery Action</th><th>Battery (kWh)</th><th>Battery After (kWh)</th></tr>' + 
-                    data.hourly_plan.map(p => `<tr><td>${p.hour}</td><td>${p.grid_kwh}</td><td>${p.solar_used_kwh}</td><td>${p.battery_action}</td><td>${p.battery_kwh}</td><td>${p.battery_energy_after_kwh}</td></tr>`).join('');
+    <!-- Results Section -->
+    <div id="resultsSection" class="space-y-6">
 
-                document.getElementById('output').style.display = 'block';
-            } catch(e) {
-                alert(e);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
+      <!-- Executive KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-cyan-500"></div>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Grid Cost</span>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiCost" class="text-2xl sm:text-3xl font-extrabold text-white">--</span>
+            <span class="text-xs font-semibold text-emerald-400">BDT</span>
+          </div>
+          <span class="text-xs text-slate-500 mt-1 block">Optimal Cost Minimized</span>
+        </div>
+
+        <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Grid Import</span>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiGrid" class="text-2xl sm:text-3xl font-extrabold text-white">--</span>
+            <span class="text-xs font-semibold text-blue-400">kWh</span>
+          </div>
+          <span class="text-xs text-slate-500 mt-1 block">24-Hour Cumulative</span>
+        </div>
+
+        <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Peak Hourly Demand</span>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiPeak" class="text-2xl sm:text-3xl font-extrabold text-white">--</span>
+            <span class="text-xs font-semibold text-amber-400">kWh</span>
+          </div>
+          <span class="text-xs text-slate-500 mt-1 block">Maximum Grid Intake</span>
+        </div>
+
+        <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Optimization Time</span>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiLatency" class="text-2xl sm:text-3xl font-extrabold text-white">--</span>
+            <span class="text-xs font-semibold text-purple-400">ms</span>
+          </div>
+          <span id="kpiSummary" class="text-xs text-slate-500 mt-1 block truncate">Solver: CBC Linear Programming</span>
+        </div>
+
+      </div>
+
+      <!-- 24-Hour Interactive Dispatch Chart -->
+      <div class="bg-slate-900/60 rounded-2xl p-6 border border-slate-800 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-base font-bold text-white">24-Hour Energy Dispatch & Battery Profile</h2>
+            <p class="text-xs text-slate-400">Stacked Generation & Grid Import vs. Battery State of Charge (SoC)</p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-300">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-blue-500"></span> Grid</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-amber-400"></span> Solar</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-400"></span> Charge</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-400"></span> Discharge</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-1 rounded bg-teal-300"></span> Battery SoC</span>
+          </div>
+        </div>
+        <div class="h-80 w-full relative">
+          <canvas id="dispatchChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Directive Interpretation Table -->
+      <div class="bg-slate-900/60 rounded-2xl p-6 border border-slate-800 space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <span>🤖</span> AI Directive Interpretations & Guardrail Analysis
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 font-semibold">
+                <th class="py-3 px-4">Index</th>
+                <th class="py-3 px-4">Directive Type</th>
+                <th class="py-3 px-4">Applies</th>
+                <th class="py-3 px-4">Target Window</th>
+                <th class="py-3 px-4">Structured Parameters</th>
+                <th class="py-3 px-4">Operational Explanation</th>
+              </tr>
+            </thead>
+            <tbody id="directivesTbody" class="divide-y divide-slate-800/50">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 24-Hour Schedule Data Table -->
+      <div class="bg-slate-900/60 rounded-2xl p-6 border border-slate-800 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>📊</span> Complete 24-Hour Hourly Dispatch Schedule
+          </h2>
+          <button onclick="toggleTable()" id="toggleTableBtn" class="text-xs text-emerald-400 hover:underline">Show Table</button>
+        </div>
+        <div id="tableContainer" class="hidden overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse font-mono">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 font-sans font-semibold">
+                <th class="py-2.5 px-3">Hour</th>
+                <th class="py-2.5 px-3">Demand</th>
+                <th class="py-2.5 px-3">Solar Used</th>
+                <th class="py-2.5 px-3">Grid Import</th>
+                <th class="py-2.5 px-3">Action</th>
+                <th class="py-2.5 px-3">Battery (kWh)</th>
+                <th class="py-2.5 px-3">SoC After</th>
+                <th class="py-2.5 px-3">Tariff (BDT)</th>
+              </tr>
+            </thead>
+            <tbody id="hourlyTbody" class="divide-y divide-slate-800/40">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-slate-900/40 text-center py-6 text-xs text-slate-500">
+    <p>GridWise Energy Optimization Platform · BUP CSE Fest 2026 Hackathon · Automated Solver CBC / FastAPI</p>
+  </footer>
+
+  <!-- App Script & Presets -->
+  <script>
+    let sampleCases = [];
+    let currentPayload = null;
+    let chartInstance = null;
+
+    // Load sample cases pack from server
+    async function init() {
+      // Check health
+      try {
+        const hRes = await fetch('/health');
+        if (!hRes.ok) throw new Error();
+      } catch {
+        document.getElementById('healthBadge').className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+        document.getElementById('healthBadge').innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span><span>API Offline</span>';
+      }
+
+      // Pre-baked sample cases for instant client switching
+      loadPreset('SAMPLE-01');
+    }
+
+    const PRESETS = {
+      "SAMPLE-01": {
+        "scenario_id": "SAMPLE-01",
+        "operator_notes": [
+          "Solar panels will be washed between 11 AM and 2 PM; treat output as 20% during this window.",
+          "Sports office requested extra power sockets for next week's badminton tournament."
+        ],
+        "hours": [
+          {"hour": 0, "demand_kwh": 90, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 1, "demand_kwh": 85, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 2, "demand_kwh": 80, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 3, "demand_kwh": 80, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 4, "demand_kwh": 85, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 5, "demand_kwh": 95, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 6, "demand_kwh": 110, "solar_kwh": 10, "tariff_bdt_per_kwh": 6},
+          {"hour": 7, "demand_kwh": 130, "solar_kwh": 30, "tariff_bdt_per_kwh": 6},
+          {"hour": 8, "demand_kwh": 160, "solar_kwh": 65, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 9, "demand_kwh": 190, "solar_kwh": 100, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 10, "demand_kwh": 210, "solar_kwh": 130, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 11, "demand_kwh": 220, "solar_kwh": 150, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 12, "demand_kwh": 215, "solar_kwh": 155, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 13, "demand_kwh": 220, "solar_kwh": 150, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 14, "demand_kwh": 210, "solar_kwh": 130, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 15, "demand_kwh": 195, "solar_kwh": 95, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 16, "demand_kwh": 175, "solar_kwh": 55, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 17, "demand_kwh": 160, "solar_kwh": 20, "tariff_bdt_per_kwh": 15},
+          {"hour": 18, "demand_kwh": 180, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 19, "demand_kwh": 200, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 20, "demand_kwh": 190, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 21, "demand_kwh": 170, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 22, "demand_kwh": 140, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 23, "demand_kwh": 110, "solar_kwh": 0, "tariff_bdt_per_kwh": 6}
+        ],
+        "battery": {
+          "capacity_kwh": 500, "initial_energy_kwh": 200, "minimum_energy_kwh": 50,
+          "max_charge_kwh_per_hour": 100, "max_discharge_kwh_per_hour": 100
         }
-    </script>
+      },
+      "SAMPLE-02": {
+        "scenario_id": "SAMPLE-02",
+        "operator_notes": ["Battery charger inspection between 2am and 5am; charging is completely disabled."],
+        "hours": [
+          {"hour": 0, "demand_kwh": 95, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 1, "demand_kwh": 90, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 2, "demand_kwh": 85, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 3, "demand_kwh": 80, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 4, "demand_kwh": 85, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 5, "demand_kwh": 90, "solar_kwh": 0, "tariff_bdt_per_kwh": 6},
+          {"hour": 6, "demand_kwh": 105, "solar_kwh": 10, "tariff_bdt_per_kwh": 6},
+          {"hour": 7, "demand_kwh": 125, "solar_kwh": 30, "tariff_bdt_per_kwh": 6},
+          {"hour": 8, "demand_kwh": 155, "solar_kwh": 60, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 9, "demand_kwh": 185, "solar_kwh": 95, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 10, "demand_kwh": 205, "solar_kwh": 125, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 11, "demand_kwh": 215, "solar_kwh": 145, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 12, "demand_kwh": 210, "solar_kwh": 150, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 13, "demand_kwh": 215, "solar_kwh": 145, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 14, "demand_kwh": 205, "solar_kwh": 125, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 15, "demand_kwh": 190, "solar_kwh": 90, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 16, "demand_kwh": 170, "solar_kwh": 50, "tariff_bdt_per_kwh": 10.5},
+          {"hour": 17, "demand_kwh": 155, "solar_kwh": 20, "tariff_bdt_per_kwh": 15},
+          {"hour": 18, "demand_kwh": 175, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 19, "demand_kwh": 195, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 20, "demand_kwh": 185, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 21, "demand_kwh": 165, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 22, "demand_kwh": 135, "solar_kwh": 0, "tariff_bdt_per_kwh": 15},
+          {"hour": 23, "demand_kwh": 105, "solar_kwh": 0, "tariff_bdt_per_kwh": 6}
+        ],
+        "battery": {
+          "capacity_kwh": 500, "initial_energy_kwh": 200, "minimum_energy_kwh": 50,
+          "max_charge_kwh_per_hour": 100, "max_discharge_kwh_per_hour": 100
+        }
+      }
+    };
+
+    function loadPreset(key) {
+      if (key === "CUSTOM") {
+        toggleJsonEditor(true);
+        return;
+      }
+      currentPayload = PRESETS[key] || PRESETS["SAMPLE-01"];
+      
+      // Update Notes UI
+      const notesDiv = document.getElementById('notesContainer');
+      notesDiv.innerHTML = currentPayload.operator_notes.map((note, i) => `
+        <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3 text-xs flex items-start gap-2">
+          <span class="text-emerald-400 font-bold">#${i}</span>
+          <span class="text-slate-300">${note}</span>
+        </div>
+      `).join('');
+
+      // Update Battery UI
+      const b = currentPayload.battery;
+      document.getElementById('batCap').innerText = `${b.capacity_kwh} kWh`;
+      document.getElementById('batInit').innerText = `${b.initial_energy_kwh} kWh`;
+      document.getElementById('batMin').innerText = `${b.minimum_energy_kwh} kWh`;
+      document.getElementById('batRate').innerText = `${b.max_charge_kwh_per_hour} / ${b.max_discharge_kwh_per_hour} kW`;
+
+      // Update Raw JSON textarea
+      document.getElementById('rawPayloadJson').value = JSON.stringify(currentPayload, null, 2);
+
+      // Auto run
+      runOptimization();
+    }
+
+    function toggleJsonEditor(forceOpen = false) {
+      const sec = document.getElementById('jsonEditorSection');
+      if (forceOpen) sec.classList.remove('hidden');
+      else sec.classList.toggle('hidden');
+    }
+
+    function toggleTable() {
+      const container = document.getElementById('tableContainer');
+      const btn = document.getElementById('toggleTableBtn');
+      if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        btn.innerText = 'Hide Table';
+      } else {
+        container.classList.add('hidden');
+        btn.innerText = 'Show Table';
+      }
+    }
+
+    async function runOptimization() {
+      const btn = document.getElementById('runBtn');
+      btn.innerHTML = `<span>⏳ Optimizing...</span>`;
+      btn.disabled = true;
+
+      try {
+        let payload;
+        try {
+          payload = JSON.parse(document.getElementById('rawPayloadJson').value);
+        } catch {
+          payload = currentPayload;
+        }
+
+        const t0 = performance.now();
+        const res = await fetch('/optimize-energy', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        const elapsed = Math.round(performance.now() - t0);
+
+        if (!res.ok) {
+          alert("Optimization Error: " + JSON.stringify(data.detail || data));
+          return;
+        }
+
+        // Update KPIs
+        document.getElementById('kpiCost').innerText = data.total_cost_bdt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('kpiGrid').innerText = data.total_grid_kwh.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+        document.getElementById('kpiPeak').innerText = data.peak_grid_kwh.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+        document.getElementById('kpiLatency').innerText = elapsed;
+        document.getElementById('kpiSummary').innerText = data.plan_summary;
+
+        // Render Directives Table
+        const dtbody = document.getElementById('directivesTbody');
+        dtbody.innerHTML = data.directive_interpretation.map(d => {
+          const appliesBadge = d.applies 
+            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">APPLIED</span>'
+            : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">NO-OP</span>';
+          
+          const hours = d.structured_adjustment?.hours ? `[${d.structured_adjustment.hours.join(', ')}]` : '-';
+          let params = '-';
+          if (d.structured_adjustment) {
+            const p = {...d.structured_adjustment};
+            delete p.hours;
+            params = Object.keys(p).length ? JSON.stringify(p) : 'window-only';
+          }
+
+          return `
+            <tr class="hover:bg-slate-800/30 transition-colors">
+              <td class="py-3 px-4 font-mono font-bold text-slate-400">${d.note_index}</td>
+              <td class="py-3 px-4 font-semibold text-white">${d.directive_type}</td>
+              <td class="py-3 px-4">${appliesBadge}</td>
+              <td class="py-3 px-4 font-mono text-emerald-400">${hours}</td>
+              <td class="py-3 px-4 font-mono text-slate-300">${params}</td>
+              <td class="py-3 px-4 text-slate-300">${d.explanation}</td>
+            </tr>
+          `;
+        }).join('');
+
+        // Render Hourly Schedule Table
+        const htbody = document.getElementById('hourlyTbody');
+        htbody.innerHTML = data.hourly_plan.map(p => {
+          let actBadge = '<span class="text-slate-500">idle</span>';
+          if (p.battery_action === 'charge') actBadge = '<span class="text-emerald-400 font-bold">CHARGE</span>';
+          else if (p.battery_action === 'discharge') actBadge = '<span class="text-rose-400 font-bold">DISCHARGE</span>';
+
+          const demand = payload.hours ? payload.hours[p.hour].demand_kwh : (payload.hourly_profile ? payload.hourly_profile[p.hour].demand_kwh : '-');
+          const tariff = payload.hours ? payload.hours[p.hour].tariff_bdt_per_kwh : (payload.hourly_profile ? payload.hourly_profile[p.hour].tariff_bdt_per_kwh : '-');
+
+          return `
+            <tr class="hover:bg-slate-800/40">
+              <td class="py-2 px-3 text-slate-400">${String(p.hour).padStart(2, '0')}:00</td>
+              <td class="py-2 px-3 text-slate-300">${demand}</td>
+              <td class="py-2 px-3 text-amber-300">${p.solar_used_kwh.toFixed(1)}</td>
+              <td class="py-2 px-3 text-blue-300">${p.grid_kwh.toFixed(1)}</td>
+              <td class="py-2 px-3">${actBadge}</td>
+              <td class="py-2 px-3 text-slate-200">${p.battery_kwh.toFixed(1)}</td>
+              <td class="py-2 px-3 text-teal-300 font-bold">${p.battery_energy_after_kwh.toFixed(1)}</td>
+              <td class="py-2 px-3 text-slate-400">${tariff}</td>
+            </tr>
+          `;
+        }).join('');
+
+        // Update Chart
+        renderChart(payload, data.hourly_plan);
+
+      } catch (err) {
+        alert("Execution Error: " + err);
+      } finally {
+        btn.innerHTML = `<span>⚡ Optimize Schedule</span>`;
+        btn.disabled = false;
+      }
+    }
+
+    function renderChart(payload, plan) {
+      const labels = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
+      const gridData = plan.map(p => p.grid_kwh);
+      const solarData = plan.map(p => p.solar_used_kwh);
+      const chargeData = plan.map(p => p.battery_action === 'charge' ? p.battery_kwh : 0);
+      const dischargeData = plan.map(p => p.battery_action === 'discharge' ? p.battery_kwh : 0);
+      const socData = plan.map(p => p.battery_energy_after_kwh);
+
+      const ctx = document.getElementById('dispatchChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Grid Import (kWh)',
+              data: gridData,
+              backgroundColor: 'rgba(59, 130, 246, 0.75)',
+              stack: 'stack0',
+              yAxisID: 'y'
+            },
+            {
+              label: 'Solar Used (kWh)',
+              data: solarData,
+              backgroundColor: 'rgba(251, 191, 36, 0.85)',
+              stack: 'stack0',
+              yAxisID: 'y'
+            },
+            {
+              label: 'Battery Charge (kWh)',
+              data: chargeData,
+              backgroundColor: 'rgba(16, 185, 129, 0.75)',
+              stack: 'stack1',
+              yAxisID: 'y'
+            },
+            {
+              label: 'Battery Discharge (kWh)',
+              data: dischargeData,
+              backgroundColor: 'rgba(244, 63, 94, 0.75)',
+              stack: 'stack1',
+              yAxisID: 'y'
+            },
+            {
+              label: 'Battery SoC (kWh)',
+              data: socData,
+              type: 'line',
+              borderColor: '#2dd4bf',
+              borderWidth: 3,
+              pointBackgroundColor: '#2dd4bf',
+              pointRadius: 3,
+              tension: 0.3,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              titleColor: '#f8fafc',
+              bodyColor: '#cbd5e1',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 10
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8', font: { size: 10 } }
+            },
+            y: {
+              type: 'linear',
+              position: 'left',
+              title: { display: true, text: 'Energy (kWh)', color: '#94a3b8', font: { size: 11 } },
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8', font: { size: 10 } }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              title: { display: true, text: 'Battery SoC (kWh)', color: '#2dd4bf', font: { size: 11 } },
+              grid: { drawOnChartArea: false },
+              ticks: { color: '#2dd4bf', font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
 </body>
 </html>

@@ -59,20 +59,25 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": errors},
     )
 
-@app.get("/")
-async def root():
-    """Root service information and navigation endpoints."""
-    return {
-        "service": "GridWise Energy Optimizer API",
-        "version": "2.0",
-        "status": "online",
-        "endpoints": {
-            "health": "/health",
-            "optimize_energy": "/optimize-energy",
-            "interactive_docs": "/docs",
-            "visual_dashboard": "/demo"
-        }
-    }
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    """Root endpoint serving interactive visual dashboard or JSON metadata."""
+    accept = request.headers.get("accept", "")
+    if "application/json" in accept and "text/html" not in accept:
+        return JSONResponse(content={
+            "service": "GridWise Energy Optimizer API",
+            "version": "2.0",
+            "status": "online",
+            "endpoints": {
+                "health": "/health",
+                "optimize_energy": "/optimize-energy",
+                "interactive_docs": "/docs",
+                "visual_dashboard": "/demo"
+            }
+        })
+    html_path = os.path.join(os.path.dirname(__file__), "demo.html")
+    with open(html_path, "r", encoding="utf-8") as f:
+        return f.read()
 
 @app.get("/health")
 async def health_check():
@@ -81,9 +86,9 @@ async def health_check():
 
 @app.get("/demo", response_class=HTMLResponse)
 async def demo_page():
-    """Serve the static demo page."""
+    """Serve the static interactive dashboard."""
     html_path = os.path.join(os.path.dirname(__file__), "demo.html")
-    with open(html_path, "r") as f:
+    with open(html_path, "r", encoding="utf-8") as f:
         return f.read()
 
 @app.post("/optimize-energy", response_model=OptimizeResponse)
