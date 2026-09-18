@@ -59,6 +59,21 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"detail": errors},
     )
 
+@app.get("/")
+async def root():
+    """Root service information and navigation endpoints."""
+    return {
+        "service": "GridWise Energy Optimizer API",
+        "version": "2.0",
+        "status": "online",
+        "endpoints": {
+            "health": "/health",
+            "optimize_energy": "/optimize-energy",
+            "interactive_docs": "/docs",
+            "visual_dashboard": "/demo"
+        }
+    }
+
 @app.get("/health")
 async def health_check():
     """Readiness probe"""
