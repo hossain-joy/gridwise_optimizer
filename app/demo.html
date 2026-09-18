@@ -34,11 +34,14 @@
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+    .toast-anim { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1), fadeOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) 2.7s forwards; }
+    @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
   </style>
 </head>
-<body class="p-3 md:p-6 min-h-screen flex justify-center items-start">
+<body class="p-2 sm:p-4 md:p-6 min-h-screen flex justify-center items-start">
 
-  <!-- Main App Shell -->
+  <!-- Main App Container -->
   <div class="w-full max-w-[1440px] bg-[#FAFBFB] rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200/80 overflow-hidden flex flex-col lg:flex-row min-h-[920px]">
 
     <!-- LEFT SIDEBAR -->
@@ -59,7 +62,7 @@
         <!-- Navigation Menu -->
         <nav class="space-y-6">
           <div>
-            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3">Menu</span>
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3">Navigation</span>
             <div class="mt-3 space-y-1">
               <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-brand-50 text-brand-900 font-semibold text-sm transition-all border border-brand-200/50">
                 <svg class="w-4 h-4 text-brand-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -67,22 +70,22 @@
                 </svg>
                 <span>Dashboard</span>
               </a>
-              <button onclick="document.getElementById('directivesSection').scrollIntoView({behavior:'smooth'})" class="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 font-medium text-sm transition-all">
+              <button onclick="scrollToSection('directivesSection')" class="w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 font-medium text-sm transition-all">
                 <div class="flex items-center gap-3">
                   <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   <span>Directives</span>
                 </div>
-                <span id="navDirectivesCount" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-100 text-brand-800">2</span>
+                <span id="navDirectivesCount" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-100 text-brand-800">--</span>
               </button>
-              <button onclick="document.getElementById('chartSection').scrollIntoView({behavior:'smooth'})" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 font-medium text-sm transition-all">
+              <button onclick="scrollToSection('chartSection')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 font-medium text-sm transition-all">
                 <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 <span>Dispatch Chart</span>
               </button>
-              <button onclick="document.getElementById('scheduleSection').scrollIntoView({behavior:'smooth'})" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 font-medium text-sm transition-all">
+              <button onclick="scrollToSection('scheduleSection')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-slate-600 hover:bg-slate-50 font-medium text-sm transition-all">
                 <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -117,12 +120,12 @@
         </nav>
       </div>
 
-      <!-- Bottom Card (Dark Forest Green like Reference UI) -->
+      <!-- Bottom Card (Dark Forest Green SaaS card) -->
       <div class="rounded-2xl bg-gradient-to-b from-brand-900 to-[#0B381F] p-4 text-white relative overflow-hidden shadow-lg shadow-brand-950/20 mt-6">
         <div class="relative z-10 space-y-2">
           <div class="w-7 h-7 rounded-xl bg-white/10 flex items-center justify-center text-xs">⚡</div>
           <h2 class="font-bold text-sm leading-tight">BUP Hackathon 2026</h2>
-          <p class="text-[11px] text-emerald-200/80">Optimal linear schedule with strict physical validation.</p>
+          <p class="text-[11px] text-emerald-200/80">Optimal LP Linear schedule with Coin-OR CBC Engine.</p>
           <a href="/docs" target="_blank" class="inline-block mt-1 w-full text-center bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs py-2 rounded-xl transition-all shadow-sm">
             Explore Swagger API
           </a>
@@ -132,12 +135,12 @@
     </aside>
 
     <!-- MAIN CONTENT AREA -->
-    <div class="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar">
+    <div class="flex-1 p-4 sm:p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar">
 
-      <!-- Top Search & Header Controls -->
+      <!-- Top Header & Controls -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         
-        <!-- Search / Quick Scenario Search Box -->
+        <!-- Scenario Selector with Search Indicator -->
         <div class="relative flex-1 max-w-md">
           <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -158,20 +161,36 @@
           <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 border border-slate-200 pointer-events-none">⌘K</span>
         </div>
 
-        <!-- Action Buttons & Operator Status -->
-        <div class="flex items-center gap-3">
-          <button onclick="toggleJsonModal()" class="px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-all shadow-sm flex items-center gap-2">
-            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-            <span>Payload JSON</span>
-          </button>
+        <!-- Action Buttons & Export Dropdown -->
+        <div class="flex flex-wrap items-center gap-2.5">
           
-          <button onclick="triggerOptimization()" id="runBtn" class="px-5 py-2.5 rounded-2xl bg-brand-900 hover:bg-brand-800 text-white font-bold text-xs transition-all shadow-md shadow-brand-950/20 flex items-center gap-2">
+          <!-- Payload JSON Modal Trigger -->
+          <button onclick="toggleJsonModal()" title="View or Edit Input JSON" class="px-3.5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-all shadow-sm flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+            <span>JSON</span>
+          </button>
+
+          <!-- Export Dropdown -->
+          <div class="relative inline-block text-left">
+            <button onclick="toggleExportMenu()" class="px-3.5 py-2.5 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-all shadow-sm flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              <span>Export ▾</span>
+            </button>
+            <div id="exportMenu" class="hidden absolute right-0 mt-2 w-48 rounded-2xl bg-white shadow-xl border border-slate-100 py-1.5 z-40 text-xs text-slate-700">
+              <button onclick="exportCSV()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2">📊 Download CSV Schedule</button>
+              <button onclick="exportJSON()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2">📋 Download Response JSON</button>
+              <button onclick="copyOutputJson()" class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2">📄 Copy JSON to Clipboard</button>
+            </div>
+          </div>
+          
+          <!-- Run Optimization CTA -->
+          <button onclick="triggerOptimization()" id="runBtn" class="px-5 py-2.5 rounded-2xl bg-brand-900 hover:bg-brand-800 active:scale-95 text-white font-bold text-xs transition-all shadow-md shadow-brand-950/20 flex items-center gap-2">
             <span class="text-emerald-400">⚡</span>
             <span>Run Optimization</span>
           </button>
 
           <!-- Operator Avatar Badge -->
-          <div class="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-200">
+          <div class="hidden sm:flex items-center gap-2.5 pl-2 border-l border-slate-200">
             <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center text-sm shadow-sm">
               👨‍💼
             </div>
@@ -185,21 +204,24 @@
       </div>
 
       <!-- Dashboard Title Section -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
         <div>
-          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Dashboard</h2>
-          <p class="text-xs text-slate-500 mt-0.5">Plan, prioritize, and optimize 24-hour smart campus energy dispatch with AI directives.</p>
+          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+            <span>Energy Dispatch Dashboard</span>
+            <span id="currentScenarioBadge" class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">SAMPLE-01</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">Optimizing 24-hour smart campus energy dispatch with natural language directives and physical linear constraints.</p>
         </div>
         <div id="liveStatusBadge" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Coin-OR CBC Solver Ready</span>
+          <span id="liveStatusText">Coin-OR CBC Solver Ready</span>
         </div>
       </div>
 
       <!-- ROW 1: 4 STAT METRIC CARDS -->
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         
-        <!-- Metric Card 1: Total Cost (Primary Active Dark Green Card) -->
+        <!-- Metric Card 1: Total Cost (Dark Green Active Card) -->
         <div class="bg-brand-900 text-white p-5 rounded-3xl shadow-lg shadow-brand-950/15 flex flex-col justify-between relative overflow-hidden">
           <div class="flex items-start justify-between">
             <span class="text-xs font-semibold text-emerald-200/90 tracking-wide">Total Grid Cost</span>
@@ -212,14 +234,14 @@
               <span id="kpiCost" class="text-3xl font-extrabold tracking-tight">--</span>
               <span class="text-xs font-bold text-emerald-300">BDT</span>
             </div>
-            <div class="flex items-center gap-1.5 mt-2">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">✓ OPTIMAL</span>
-              <span class="text-[11px] text-emerald-200/70">Mathematical Minimum</span>
+            <div class="flex items-center gap-2 mt-2">
+              <span id="kpiCostSaved" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">✓ OPTIMAL</span>
+              <span id="kpiCostSavedPct" class="text-[11px] text-emerald-200/70">Mathematical Minimum</span>
             </div>
           </div>
         </div>
 
-        <!-- Metric Card 2: Total Grid Import (White Card) -->
+        <!-- Metric Card 2: Total Grid Import -->
         <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
           <div class="flex items-start justify-between">
             <span class="text-xs font-semibold text-slate-500 tracking-wide">Total Grid Import</span>
@@ -232,14 +254,14 @@
               <span id="kpiGrid" class="text-3xl font-extrabold text-slate-900 tracking-tight">--</span>
               <span class="text-xs font-bold text-slate-400">kWh</span>
             </div>
-            <div class="flex items-center gap-1.5 mt-2">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">24-Hour Sum</span>
-              <span class="text-[11px] text-slate-400">Net Feeder Draw</span>
+            <div class="flex items-center gap-2 mt-2">
+              <span id="kpiSolarSelfPct" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">24h Net Draw</span>
+              <span class="text-[11px] text-slate-400">Feeder Inflow</span>
             </div>
           </div>
         </div>
 
-        <!-- Metric Card 3: Peak Grid Demand (White Card) -->
+        <!-- Metric Card 3: Peak Grid Demand -->
         <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
           <div class="flex items-start justify-between">
             <span class="text-xs font-semibold text-slate-500 tracking-wide">Peak Grid Demand</span>
@@ -252,14 +274,14 @@
               <span id="kpiPeak" class="text-3xl font-extrabold text-slate-900 tracking-tight">--</span>
               <span class="text-xs font-bold text-slate-400">kWh</span>
             </div>
-            <div class="flex items-center gap-1.5 mt-2">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">Capped Peak</span>
+            <div class="flex items-center gap-2 mt-2">
+              <span id="kpiPeakHour" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">Peak Hour</span>
               <span class="text-[11px] text-slate-400">Maximum Hour Load</span>
             </div>
           </div>
         </div>
 
-        <!-- Metric Card 4: Battery Neutrality (White Card) -->
+        <!-- Metric Card 4: Battery Neutrality -->
         <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
           <div class="flex items-start justify-between">
             <span class="text-xs font-semibold text-slate-500 tracking-wide">Battery Neutrality</span>
@@ -272,9 +294,9 @@
               <span id="kpiNeutral" class="text-3xl font-extrabold text-slate-900 tracking-tight">100%</span>
               <span class="text-xs font-bold text-slate-400">Neutral</span>
             </div>
-            <div class="flex items-center gap-1.5 mt-2">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">SoC Neutral</span>
-              <span class="text-[11px] text-slate-400">Fully Conserved</span>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">SoC Balanced</span>
+              <span id="kpiBatteryThroughput" class="text-[11px] text-slate-400">Zero Degradation</span>
             </div>
           </div>
         </div>
@@ -307,27 +329,27 @@
         <!-- Right: Active Directive Spotlight & Summary (4 Cols) -->
         <div class="lg:col-span-4 flex flex-col justify-between gap-4">
           
-          <!-- Directive Spotlight Card (Matches Reminder Card in Reference) -->
+          <!-- Directive Spotlight Card -->
           <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Primary Directive</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Primary Directive Spotlight</span>
               <span id="spotlightBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">APPLIED</span>
             </div>
             <div>
               <h4 id="spotlightTitle" class="font-bold text-base text-slate-900">Solar Cleaning Window</h4>
-              <p id="spotlightTime" class="text-xs text-slate-500 mt-0.5">Hours: 11:00 AM – 2:00 PM (Factor 0.20)</p>
+              <p id="spotlightTime" class="text-xs text-slate-500 mt-0.5">Hours: 12:00 PM – 2:00 PM (Factor 0.25)</p>
             </div>
             <button onclick="triggerOptimization()" class="w-full py-2.5 rounded-2xl bg-brand-900 hover:bg-brand-800 text-white font-bold text-xs transition-all shadow-md shadow-brand-950/20 flex items-center justify-center gap-2">
               <span>⚡ Execute Schedule</span>
             </button>
           </div>
 
-          <!-- Energy Mix Doughnut Card (Matches Project Progress in Reference) -->
+          <!-- Energy Mix Doughnut Card -->
           <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between gap-4">
             <div class="space-y-1">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Energy Mix</span>
-              <div class="text-2xl font-extrabold text-slate-900" id="solarSharePct">28%</div>
-              <p class="text-[11px] text-slate-500">Clean Solar Contribution</p>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Clean Energy Mix</span>
+              <div class="text-2xl font-extrabold text-slate-900" id="solarSharePct">--%</div>
+              <p class="text-[11px] text-slate-500">Solar Contribution</p>
               <div class="flex items-center gap-2 text-[10px] text-slate-400 pt-1">
                 <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Solar</span>
                 <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-800"></span> Grid</span>
@@ -345,10 +367,13 @@
       <!-- ROW 3: DIRECTIVES LIST & HOURLY SCHEDULE -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- Left: Directive Breakdown List (Matches Team Collab in Ref) -->
+        <!-- Left: Directive Breakdown List (5 Cols) -->
         <div id="directivesSection" class="lg:col-span-5 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
           <div class="flex items-center justify-between">
-            <h3 class="font-bold text-slate-900 text-base tracking-tight">Operator Directives Breakdown</h3>
+            <div>
+              <h3 class="font-bold text-slate-900 text-base tracking-tight">Operator Directives Breakdown</h3>
+              <p class="text-xs text-slate-400">Machine-validated interpretations</p>
+            </div>
             <span class="text-xs text-slate-400 font-medium">LLM + Guardrails</span>
           </div>
           <div id="directivesList" class="space-y-3">
@@ -358,17 +383,24 @@
 
         <!-- Right: 24-Hour Schedule Data Table (7 Cols) -->
         <div id="scheduleSection" class="lg:col-span-7 bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 class="font-bold text-slate-900 text-base tracking-tight">24-Hour Hourly Dispatch Schedule</h3>
               <p class="text-xs text-slate-400">Physical conservation balance validated at every hour</p>
             </div>
-            <span class="text-xs font-bold text-brand-800 px-2.5 py-1 rounded-full bg-brand-50 border border-brand-200">24 Hours Active</span>
+            
+            <!-- Filter Action Chips -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <button onclick="filterTable('all')" id="filterBtn-all" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-brand-900 text-white transition-all">All (24)</button>
+              <button onclick="filterTable('charge')" id="filterBtn-charge" class="px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Charge</button>
+              <button onclick="filterTable('discharge')" id="filterBtn-discharge" class="px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Discharge</button>
+              <button onclick="filterTable('solar')" id="filterBtn-solar" class="px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">Solar</button>
+            </div>
           </div>
 
-          <div class="overflow-x-auto max-h-[360px] custom-scrollbar border border-slate-100 rounded-2xl">
+          <div class="overflow-x-auto max-h-[380px] custom-scrollbar border border-slate-100 rounded-2xl">
             <table class="w-full text-left text-xs border-collapse">
-              <thead class="sticky top-0 bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+              <thead class="sticky top-0 bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 z-10">
                 <tr>
                   <th class="py-2.5 px-3">Hour</th>
                   <th class="py-2.5 px-3">Demand</th>
@@ -395,24 +427,41 @@
 
   <!-- JSON Modal for Viewing / Customizing Raw Request -->
   <div id="jsonModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-150">
       <div class="flex items-center justify-between">
-        <h3 class="font-bold text-slate-900 text-base">Raw Scenario JSON (POST /optimize-energy)</h3>
-        <button onclick="toggleJsonModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+        <div>
+          <h3 class="font-bold text-slate-900 text-base">Scenario JSON Payload</h3>
+          <p class="text-xs text-slate-400">Edit payload inputs for POST /optimize-energy</p>
+        </div>
+        <button onclick="toggleJsonModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
       </div>
-      <textarea id="jsonPayloadArea" rows="12" class="w-full font-mono text-xs bg-slate-900 text-emerald-400 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
-      <div class="flex items-center justify-end gap-3">
-        <button onclick="toggleJsonModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
-        <button onclick="applyCustomJson()" class="px-5 py-2 rounded-xl text-xs font-bold bg-brand-900 hover:bg-brand-800 text-white shadow-md">Apply & Optimize</button>
+      <div class="relative">
+        <textarea id="jsonPayloadArea" rows="13" class="w-full font-mono text-xs bg-slate-900 text-emerald-400 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 custom-scrollbar"></textarea>
+      </div>
+      <div id="jsonErrorBanner" class="hidden p-2.5 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200 font-mono"></div>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <button onclick="prettifyJson()" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200">Format</button>
+          <button onclick="resetJsonToCurrent()" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200">Reset</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="toggleJsonModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
+          <button onclick="applyCustomJson()" class="px-5 py-2 rounded-xl text-xs font-bold bg-brand-900 hover:bg-brand-800 text-white shadow-md">Apply & Optimize</button>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- Application Logic & Data -->
   <script>
     let dispatchChartInstance = null;
     let mixChartInstance = null;
     let currentPayload = null;
+    let lastOptimizationResult = null;
+    let currentFilter = 'all';
 
     const SAMPLE_DATABASE = {
   "SAMPLE-01": {
@@ -2015,28 +2064,136 @@
   }
 };
 
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const bg = type === 'success' ? 'bg-slate-900 text-white border-emerald-500/30' : 'bg-rose-900 text-white border-rose-500/30';
+      const icon = type === 'success' ? '⚡' : '⚠️';
+      toast.className = `p-3.5 rounded-2xl shadow-xl border text-xs font-medium flex items-center gap-2.5 ${bg} toast-anim pointer-events-auto`;
+      toast.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3000);
+    }
+
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function toggleExportMenu() {
+      const menu = document.getElementById('exportMenu');
+      menu.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('exportMenu');
+      if (menu && !menu.contains(e.target) && !e.target.closest('button[onclick="toggleExportMenu()"]')) {
+        menu.classList.add('hidden');
+      }
+    });
+
     function switchScenario(key) {
       if (key === "CUSTOM") {
         toggleJsonModal();
         return;
       }
       currentPayload = SAMPLE_DATABASE[key] || SAMPLE_DATABASE["SAMPLE-01"];
+      document.getElementById('currentScenarioBadge').innerText = key;
       document.getElementById('jsonPayloadArea').value = JSON.stringify(currentPayload, null, 2);
+      document.getElementById('scenarioSelector').value = key;
       triggerOptimization();
     }
 
     function toggleJsonModal() {
       const modal = document.getElementById('jsonModal');
       modal.classList.toggle('hidden');
+      document.getElementById('jsonErrorBanner').classList.add('hidden');
+    }
+
+    function prettifyJson() {
+      try {
+        const parsed = JSON.parse(document.getElementById('jsonPayloadArea').value);
+        document.getElementById('jsonPayloadArea').value = JSON.stringify(parsed, null, 2);
+        document.getElementById('jsonErrorBanner').classList.add('hidden');
+      } catch (e) {
+        const b = document.getElementById('jsonErrorBanner');
+        b.innerText = "Syntax Error: " + e.message;
+        b.classList.remove('hidden');
+      }
+    }
+
+    function resetJsonToCurrent() {
+      const selKey = document.getElementById('scenarioSelector').value;
+      currentPayload = SAMPLE_DATABASE[selKey] || SAMPLE_DATABASE["SAMPLE-01"];
+      document.getElementById('jsonPayloadArea').value = JSON.stringify(currentPayload, null, 2);
+      document.getElementById('jsonErrorBanner').classList.add('hidden');
+      showToast("Reset to " + selKey);
     }
 
     function applyCustomJson() {
       try {
-        currentPayload = JSON.parse(document.getElementById('jsonPayloadArea').value);
+        const text = document.getElementById('jsonPayloadArea').value;
+        currentPayload = JSON.parse(text);
+        document.getElementById('currentScenarioBadge').innerText = currentPayload.scenario_id || "CUSTOM";
+        document.getElementById('scenarioSelector').value = "CUSTOM";
         toggleJsonModal();
         triggerOptimization();
+        showToast("Custom scenario applied");
       } catch (e) {
-        alert("Invalid JSON: " + e.message);
+        const b = document.getElementById('jsonErrorBanner');
+        b.innerText = "Invalid JSON: " + e.message;
+        b.classList.remove('hidden');
+      }
+    }
+
+    function exportCSV() {
+      if (!lastOptimizationResult) return alert("Run optimization first!");
+      const p = lastOptimizationResult.hourly_plan;
+      const hoursData = currentPayload.hours || currentPayload.hourly_profile;
+      let csv = "hour,demand_kwh,solar_used_kwh,grid_kwh,battery_action,battery_kwh,battery_energy_after_kwh,tariff_bdt_per_kwh\n";
+      p.forEach(r => {
+        const dem = hoursData[r.hour].demand_kwh;
+        const tar = hoursData[r.hour].tariff_bdt_per_kwh;
+        csv += `${r.hour},${dem},${r.solar_used_kwh},${r.grid_kwh},${r.battery_action},${r.battery_kwh},${r.battery_energy_after_kwh},${tar}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentPayload.scenario_id || "schedule"}_optimal_dispatch.csv`;
+      a.click();
+      showToast("CSV Schedule Downloaded");
+    }
+
+    function exportJSON() {
+      if (!lastOptimizationResult) return alert("Run optimization first!");
+      const blob = new Blob([JSON.stringify(lastOptimizationResult, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentPayload.scenario_id || "schedule"}_optimal_result.json`;
+      a.click();
+      showToast("Response JSON Downloaded");
+    }
+
+    function copyOutputJson() {
+      if (!lastOptimizationResult) return alert("Run optimization first!");
+      navigator.clipboard.writeText(JSON.stringify(lastOptimizationResult, null, 2));
+      showToast("Result JSON copied to clipboard");
+    }
+
+    function filterTable(type) {
+      currentFilter = type;
+      ['all', 'charge', 'discharge', 'solar'].forEach(k => {
+        const btn = document.getElementById('filterBtn-' + k);
+        if (k === type) {
+          btn.className = "px-2.5 py-1 rounded-xl text-[11px] font-bold bg-brand-900 text-white transition-all";
+        } else {
+          btn.className = "px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all";
+        }
+      });
+      if (lastOptimizationResult) {
+        renderHourlyTable(currentPayload.hours || currentPayload.hourly_profile, lastOptimizationResult.hourly_plan);
       }
     }
 
@@ -2051,17 +2208,22 @@
           document.getElementById('jsonPayloadArea').value = JSON.stringify(currentPayload, null, 2);
         }
 
+        const t0 = performance.now();
         const res = await fetch('/optimize-energy', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(currentPayload)
         });
+        const solveMs = Math.round(performance.now() - t0);
         const data = await res.json();
 
         if (!res.ok) {
+          showToast("Solver Error: " + (data.detail || "Infeasible"), "error");
           alert("Error: " + JSON.stringify(data.detail || data));
           return;
         }
+
+        lastOptimizationResult = data;
 
         // 1. Update Metric Cards
         document.getElementById('kpiCost').innerText = data.total_cost_bdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -2070,9 +2232,13 @@
         
         const initSoc = currentPayload.battery.initial_energy_kwh;
         const lastSoc = data.hourly_plan[23].battery_energy_after_kwh;
-        document.getElementById('kpiNeutral').innerText = `${Math.round((lastSoc/initSoc)*100)}%`;
+        const neutralityPct = Math.round((lastSoc / initSoc) * 100);
+        document.getElementById('kpiNeutral').innerText = `${neutralityPct}%`;
 
-        // 2. Update Directives List
+        const peakItem = data.hourly_plan.reduce((max, p) => p.grid_kwh > max.grid_kwh ? p : max, data.hourly_plan[0]);
+        document.getElementById('kpiPeakHour').innerText = `Peak @ ${String(peakItem.hour).padStart(2, '0')}:00`;
+
+        // 2. Directives List
         const dirList = document.getElementById('directivesList');
         const navCount = document.getElementById('navDirectivesCount');
         navCount.innerText = data.directive_interpretation.length;
@@ -2115,40 +2281,59 @@
         }
 
         // 4. Update Hourly Table
-        const tbody = document.getElementById('hourlyTableBody');
         const hoursData = currentPayload.hours || currentPayload.hourly_profile;
-        tbody.innerHTML = data.hourly_plan.map(p => {
-          let actTag = '<span class="text-slate-400">idle</span>';
-          if (p.battery_action === 'charge') actTag = '<span class="text-emerald-700 font-bold px-1.5 py-0.5 rounded bg-emerald-50">CHARGE</span>';
-          else if (p.battery_action === 'discharge') actTag = '<span class="text-rose-700 font-bold px-1.5 py-0.5 rounded bg-rose-50">DISCHARGE</span>';
-
-          const dem = hoursData[p.hour].demand_kwh;
-          const tar = hoursData[p.hour].tariff_bdt_per_kwh;
-
-          return `
-            <tr class="hover:bg-slate-50/80 transition-colors">
-              <td class="py-2.5 px-3 font-semibold text-slate-900">${String(p.hour).padStart(2, '0')}:00</td>
-              <td class="py-2.5 px-3 text-slate-600">${dem}</td>
-              <td class="py-2.5 px-3 text-amber-600 font-medium">${p.solar_used_kwh.toFixed(1)}</td>
-              <td class="py-2.5 px-3 text-slate-900 font-semibold">${p.grid_kwh.toFixed(1)}</td>
-              <td class="py-2.5 px-3">${actTag}</td>
-              <td class="py-2.5 px-3 text-slate-600">${p.battery_kwh.toFixed(1)}</td>
-              <td class="py-2.5 px-3 text-brand-900 font-bold">${p.battery_energy_after_kwh.toFixed(1)}</td>
-              <td class="py-2.5 px-3 text-slate-400">${tar}</td>
-            </tr>
-          `;
-        }).join('');
+        renderHourlyTable(hoursData, data.hourly_plan);
 
         // 5. Update Charts
         renderDispatchChart(hoursData, data.hourly_plan);
         renderMixChart(data.hourly_plan, data.total_grid_kwh);
 
+        showToast(`Optimized ${currentPayload.scenario_id} in ${solveMs}ms`);
+
       } catch (err) {
-        alert("Optimization request failed: " + err);
+        showToast("Request failed: " + err, "error");
       } finally {
         runBtn.innerHTML = `<span class="text-emerald-400">⚡</span><span>Run Optimization</span>`;
         runBtn.disabled = false;
       }
+    }
+
+    function renderHourlyTable(hoursData, plan) {
+      const tbody = document.getElementById('hourlyTableBody');
+      
+      const filteredPlan = plan.filter(p => {
+        if (currentFilter === 'charge') return p.battery_action === 'charge';
+        if (currentFilter === 'discharge') return p.battery_action === 'discharge';
+        if (currentFilter === 'solar') return p.solar_used_kwh > 0;
+        return true;
+      });
+
+      if (filteredPlan.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400 font-sans">No matching hours for filter "${currentFilter}"</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filteredPlan.map(p => {
+        let actTag = '<span class="text-slate-400">idle</span>';
+        if (p.battery_action === 'charge') actTag = '<span class="text-emerald-700 font-bold px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50">CHARGE</span>';
+        else if (p.battery_action === 'discharge') actTag = '<span class="text-rose-700 font-bold px-1.5 py-0.5 rounded bg-rose-50 border border-rose-200/50">DISCHARGE</span>';
+
+        const dem = hoursData[p.hour].demand_kwh;
+        const tar = hoursData[p.hour].tariff_bdt_per_kwh;
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition-colors">
+            <td class="py-2.5 px-3 font-semibold text-slate-900">${String(p.hour).padStart(2, '0')}:00</td>
+            <td class="py-2.5 px-3 text-slate-600">${dem}</td>
+            <td class="py-2.5 px-3 text-amber-600 font-medium">${p.solar_used_kwh.toFixed(1)}</td>
+            <td class="py-2.5 px-3 text-slate-900 font-semibold">${p.grid_kwh.toFixed(1)}</td>
+            <td class="py-2.5 px-3">${actTag}</td>
+            <td class="py-2.5 px-3 text-slate-600">${p.battery_kwh.toFixed(1)}</td>
+            <td class="py-2.5 px-3 text-brand-900 font-bold">${p.battery_energy_after_kwh.toFixed(1)}</td>
+            <td class="py-2.5 px-3 text-slate-400">${tar}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function renderDispatchChart(hoursData, plan) {
@@ -2278,6 +2463,20 @@
         }
       });
     }
+
+    // Keyboard shortcuts: ⌘K / Ctrl+K for scenario selector, Ctrl+Enter to solve
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const sel = document.getElementById('scenarioSelector');
+        sel.focus();
+        sel.click();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        triggerOptimization();
+      }
+    });
 
     window.addEventListener('DOMContentLoaded', () => {
       switchScenario('SAMPLE-01');
