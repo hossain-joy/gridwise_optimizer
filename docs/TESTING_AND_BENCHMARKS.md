@@ -7,23 +7,19 @@ The GridWise test suite provides comprehensive automated coverage across all lay
 ```
 tests/
 ├── sample_cases.json         # 10 Official Judge Sample Test Cases (v2.0)
-├── extended_cases.json       # 20 Additional Complex Synthetic Test Scenarios (SYNTH-11 to SYNTH-30)
-├── test_all_30_cases.py      # Automated benchmark verifying all 30 scenarios (100% pass)
-├── test_sample_pack.py       # End-to-end API test verifying official sample cases
+├── test_sample_pack.py       # End-to-end API test verifying official sample cases (10/10)
 ├── test_directives.py        # Directive interpretation & NLP extraction unit tests
 ├── test_optimizer.py         # PuLP Linear Programming optimization unit tests
 ├── test_guardrail.py         # Guardrail boundary and downgrade security tests
 ├── test_fuzz.py              # Malformed payloads & 400 Bad Request verification
-├── test_api.py               # Basic API health & endpoint sanity tests
-├── verify_all.py             # Math & replay verification script
-└── generate_report.py        # Benchmark report generator
+└── test_api.py               # Basic API health & endpoint sanity tests
 ```
 
 ---
 
 ## Running the Tests
 
-### 1. Run Complete Pytest Suite (53 Tests)
+### 1. Run Complete Pytest Suite (23 Tests)
 ```bash
 # Windows PowerShell
 $env:PYTHONPATH="."
@@ -31,16 +27,6 @@ pytest -v
 
 # Linux / macOS
 PYTHONPATH=. pytest -v
-```
-
-### 2. Run All 30 Cases Benchmark Runner
-```bash
-# Windows PowerShell
-$env:PYTHONPATH="."
-python tests/test_all_30_cases.py
-
-# Linux / macOS
-PYTHONPATH=. python tests/test_all_30_cases.py
 ```
 
 ---

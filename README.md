@@ -6,7 +6,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com/)
 [![PuLP](https://img.shields.io/badge/PuLP-Linear%20Programming-orange.svg)](https://coin-or.github.io/pulp/)
 [![Live Cloud](https://img.shields.io/badge/Live%20Demo-Render-brightgreen.svg)](https://voltss.onrender.com/)
-[![Tests](https://img.shields.io/badge/Tests-100%2F100%20Passing%20(100%25)-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-23%2F23%20Passing%20(100%25)-brightgreen.svg)]()
 
 [Overview](#overview) · [Architecture](#architecture) · [Optimization Model](#optimization-model) · [Complete Example](#complete-example) · [API Specification](#api-specification) · [Interactive Dashboard](#interactive-dashboard) · [Technology Stack](#️-technology-stack) · [Project Structure](#project-structure) · [Quick Start](#quick-start) · [Docker](#-docker-deployment) · [Verification Benchmarks](#-testing--benchmarks)
 
@@ -265,16 +265,12 @@ gridwise_optimizer/
 │   └── DEPLOYMENT_GUIDE.md      # Docker & Render deployment instructions
 ├── tests/
 │   ├── sample_cases.json        # 10 official public sample cases from competition pack
-│   ├── extended_cases.json      # 20 synthetic edge cases
 │   ├── test_api.py              # Health check & endpoint validation
+│   ├── test_sample_pack.py      # End-to-end official sample pack test suite (10/10)
 │   ├── test_optimizer.py        # Solver optimality & tie-breaker tests
 │   ├── test_guardrail.py        # Deterministic guardrail bound tests
 │   ├── test_directives.py       # LLM prompt & heuristic interpretation tests
-│   ├── test_fuzz.py             # Edge-case & invalid payload fuzzing tests
-│   ├── test_sample_pack.py      # End-to-end official sample pack test suite
-│   ├── test_all_30_cases.py     # 30-case full benchmark test
-│   ├── test_100_scenarios.py    # 100-scenario automated stress & replay audit
-│   └── run_official_sample_evaluation.py # Official 10-case evaluation audit runner
+│   └── test_fuzz.py             # Edge-case & invalid payload fuzzing tests
 ├── Dockerfile                   # Multi-stage production container definition
 ├── docker-compose.yml           # Local multi-container orchestration
 ├── requirements.txt             # Locked Python dependencies
@@ -347,24 +343,19 @@ docker compose up -d
 ## 🧪 Testing & Benchmarks
 
 ```bash
-# 1. Run all 53 unit, integration, and fuzz test suites
+# Run all unit, guardrail, optimizer, and official sample pack tests
 python -m pytest tests/ -v
-
-# 2. Run the Official 10-Sample Public Benchmark Evaluation
-python -m tests.run_official_sample_evaluation
-
-# 3. Run the 100-Scenario Comprehensive Stress & Physical Replay Audit (2,400 hours)
-python -m tests.test_100_scenarios
 ```
 
 ### Benchmark Summary
 
 | Test Suite | Scope | Energy Balance | Battery Bounds | Cost Parity | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Official Public Pack** | 10 Scenarios | 100% Conserved | 100% Compliant | $\Delta = 0.00\text{ BDT}$ | **PASS** ✅ |
-| **Extended Synthetic Suite** | 20 Scenarios | 100% Conserved | 100% Compliant | Optimal | **PASS** ✅ |
-| **100-Case Stress Audit** | 100 Scenarios (2,400h) | 100% Conserved | 100% Compliant | Optimal | **PASS** ✅ |
-| **Pytest Full Suite** | 53 Test Cases | 100% Conserved | 100% Compliant | 0 Failures | **PASS** ✅ |
+| **Official Public Pack (`test_sample_pack.py`)** | 10 Scenarios | 100% Conserved | 100% Compliant | $\Delta = 0.00\text{ BDT}$ | **PASS** ✅ |
+| **Directives & NLP Suite (`test_directives.py`)** | Operator Notes | Validated | Validated | N/A | **PASS** ✅ |
+| **Guardrails & Fuzz Suite (`test_guardrail.py`, `test_fuzz.py`)** | Edge & Error Cases | 100% Bound Checked | 100% Compliant | N/A | **PASS** ✅ |
+| **Mathematical LP Engine (`test_optimizer.py`)** | PuLP / CBC Solver | 100% Conserved | 100% Compliant | Optimal | **PASS** ✅ |
+| **Full Pytest Suite** | 23 Test Cases | 100% Conserved | 100% Compliant | 0 Failures | **PASS** ✅ |
 
 ---
 
