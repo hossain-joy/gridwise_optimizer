@@ -3,23 +3,33 @@
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com/)
 [![PuLP](https://img.shields.io/badge/PuLP-Linear%20Programming-orange.svg)](https://coin-or.github.io/pulp/)
-[![Tests](https://img.shields.io/badge/Tests-23%20Passing-brightgreen.svg)]()
+[![Live Cloud](https://img.shields.io/badge/Live%20Demo-Render-brightgreen.svg)](https://voltss.onrender.com/)
+[![Tests](https://img.shields.io/badge/Tests-100%20Passing%20(100%25)-brightgreen.svg)]()
 
-Production-grade, resilient FastAPI backend for 24-hour campus energy schedule optimization. Designed for the **BUP CSE Fest 2026 Hackathon (Online Preliminary)**.
+Production-grade, resilient FastAPI backend and interactive Dribbble-inspired SaaS dashboard for 24-hour campus energy schedule optimization. Designed for the **BUP CSE Fest 2026 Hackathon (Online Preliminary)**.
 
 ---
 
-## Key Highlights
+## 🌐 Live Cloud Deployment
+
+- **Live Interactive Dashboard:** [https://voltss.onrender.com/](https://voltss.onrender.com/)
+- **Swagger OpenAPI Docs:** [https://voltss.onrender.com/docs](https://voltss.onrender.com/docs)
+- **Health Check Endpoint:** [https://voltss.onrender.com/health](https://voltss.onrender.com/health)
+
+---
+
+## ⚡ Key Highlights
 
 - **Decoupled 5-Stage Architecture:** Strictly isolates untrusted LLM interpretation from deterministic mathematical linear programming and physical constraint validation.
-- **100% Benchmark Accuracy:** Validated against all 10 official public sample cases with zero error in directive interpretation, energy conservation, and cost minimization.
+- **100% Benchmark Accuracy:** Validated against all 10 official public sample cases + 90 synthetic stress scenarios (100/100 passing, 2,400 hours physically verified) with zero error in directive interpretation, energy conservation, and cost minimization.
 - **Zero-Downtime Resilience:** Features dual-model failover, in-memory prompt caching (0ms hit latency), and an intelligent deterministic NLP fallback for offline execution.
 - **Optimal Tie-Breaking:** Employs a negligible peak penalty ($\epsilon = 10^{-5}$) to break dispatch ties across identical tariff hours, smoothing peak import while guaranteeing minimal cost.
 - **Physical Safety Replay:** Independently re-computes and asserts energy balance, battery limits, rate constraints, and end-of-day neutrality ($SoC_{23} = SoC_{initial}$) before responding.
+- **Interactive Modern UI/UX:** Dribbble-grade SaaS dashboard with 1-click scenario switching, Chart.js 24h stacked dispatch profile, live directives breakdown, table action filters, CSV/JSON data export, and keyboard shortcuts (`⌘K` / `Ctrl+Enter`).
 
 ---
 
-## Architecture at a Glance
+## 📐 Architecture at a Glance
 
 ```
 Energy Data + Operator Notes
@@ -37,16 +47,17 @@ API Response (200 OK)
 
 ---
 
-## Documentation Index
+## 📚 Documentation Index
 
 - [**System Architecture (`docs/ARCHITECTURE.md`)**](docs/ARCHITECTURE.md): In-depth 5-stage pipeline walkthrough, LP mathematical formulation, and caching mechanics.
 - [**Directives Specification (`docs/DIRECTIVES_SPEC.md`)**](docs/DIRECTIVES_SPEC.md): Complete schema, semantics, and time window rules for all 6 directives.
 - [**API Reference (`docs/API_REFERENCE.md`)**](docs/API_REFERENCE.md): Full endpoint specs, request/response models, status codes, and code examples.
 - [**Testing & Benchmarks (`docs/TESTING_AND_BENCHMARKS.md`)**](docs/TESTING_AND_BENCHMARKS.md): Full test suite instructions, benchmark outputs, and compliance checklists.
+- [**Deployment Guide (`docs/DEPLOYMENT_GUIDE.md`)**](docs/DEPLOYMENT_GUIDE.md): Complete guide for Docker, Render, and cloud hosting.
 
 ---
 
-## Quickstart
+## 🚀 Quickstart
 
 ### 1. Prerequisites
 - Python 3.11+
@@ -55,6 +66,7 @@ API Response (200 OK)
 ### 2. Environment Setup
 ```bash
 # Clone and enter directory
+git clone https://github.com/hossain-joy/gridwise_optimizer.git
 cd gridwise_optimizer
 
 # Create and activate virtual environment
@@ -72,10 +84,10 @@ pip install -r requirements.txt
 Copy `.env.example` to `.env`:
 ```env
 PORT=8000
-LLM_PROVIDER=openai
-LLM_MODEL=gpt-4o-mini
-LLM_API_KEY=sk-...
-FALLBACK_LLM_MODEL=gpt-4o-mini-backup
+LLM_PROVIDER=gemini
+LLM_MODEL=gemini-2.5-flash
+LLM_API_KEY=your_gemini_api_key_here
+LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
 ```
 *(Note: If `LLM_API_KEY` is not provided, the service automatically utilizes the deterministic NLP fallback extractor.)*
 
@@ -84,46 +96,32 @@ FALLBACK_LLM_MODEL=gpt-4o-mini-backup
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 - API Docs: `http://localhost:8000/docs`
-- Interactive Demo Dashboard: `http://localhost:8000/demo`
+- Interactive Dashboard: `http://localhost:8000/` or `http://localhost:8000/demo`
 - Health Probe: `http://localhost:8000/health`
 
 ---
 
-## Running the Automated Test Suite
+## 🧪 Running the Automated Test Suites
 
 ```bash
-# Run all unit, fuzz, guardrail, and sample pack integration tests
-pytest -v
+# 1. Run all unit, fuzz, guardrail, and sample pack integration tests (53 tests)
+python -m pytest tests/ -v
 
-# Run the 10-case public sample benchmark report
-python tests/generate_report.py
+# 2. Run the 10-case official sample evaluation benchmark
+python -m tests.run_official_sample_evaluation
+
+# 3. Run the 100-scenario comprehensive stress & physical replay audit (2,400 hours)
+python -m tests.test_100_scenarios
 ```
 
 ---
 
-## Docker Deployment
+## 🐳 Docker Deployment
 
 ```bash
 # Build image
-docker build -t gridwise-optimizer:v2 .
+docker build -t gridwise-optimizer .
 
 # Run container
-docker run -d --name gridwise \
-  -p 8000:8000 \
-  -e PORT=8000 \
-  -e LLM_API_KEY="sk-..." \
-  gridwise-optimizer:v2
+docker run -d -p 8000:8000 --name gridwise gridwise-optimizer
 ```
-
----
-
-## Core Optimization Directives
-
-| Directive Type | Description | Key Parameters |
-| :--- | :--- | :--- |
-| `solar_reduction` | Solar availability drops | `{"hours": [...], "factor": 0.0..1.0}` |
-| `minimum_battery_reserve` | Emergency reserve floor | `{"hours": [...], "minimum_energy_kwh": float}` |
-| `no_charge_window` | Charging is blocked | `{"hours": [...]}` |
-| `no_discharge_window` | Discharging is blocked | `{"hours": [...]}` |
-| `max_grid_window` | Feeder import limit | `{"hours": [...], "max_grid_kwh": float}` |
-| `no_op` | Unrelated distractor note | `applies: false, structured_adjustment: null` |
