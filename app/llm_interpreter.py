@@ -262,19 +262,21 @@ _client = None
 def get_client():
     global _client
     if _client is None:
-        api_key = os.environ.get("LLM_API_KEY")
+        api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or os.environ.get("LLM_API_KEY")
         base_url = os.environ.get("LLM_BASE_URL")
-        provider = os.environ.get("LLM_PROVIDER", "").lower()
+        provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
         
+        # Configure Google AI Studio (Gemini) endpoint
         if not base_url and api_key:
-            if provider == "gemini" or api_key.startswith("AQ.") or api_key.startswith("AIzaSy"):
+            if provider in ["gemini", "google"] or api_key.startswith("AQ.") or api_key.startswith("AIzaSy"):
                 base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
                 
         if api_key:
             if base_url:
-                _client = OpenAI(api_key=api_key, base_url=base_url, max_retries=0, timeout=3.0)
+                logger.info(f"Initializing LLM client with endpoint: {base_url}")
+                _client = OpenAI(api_key=api_key, base_url=base_url, max_retries=0, timeout=5.0)
             else:
-                _client = OpenAI(api_key=api_key, max_retries=0, timeout=3.0)
+                _client = OpenAI(api_key=api_key, max_retries=0, timeout=5.0)
     return _client
 
 def interpret_notes(notes: List[str], scenario_id: str, battery_capacity_kwh: float = 500.0) -> List[dict]:
@@ -298,7 +300,9 @@ def interpret_notes(notes: List[str], scenario_id: str, battery_capacity_kwh: fl
             
     # 2. Call LLM for misses if API key configured
     if misses:
-        model = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+        provider = os.environ.get("LLM_PROVIDER", "gemini").lower()
+        default_model = "gemini-2.5-flash" if provider in ["gemini", "google"] else "gpt-4o-mini"
+        model = os.environ.get("LLM_MODEL", default_model)
         client = get_client()
         
         if client:
@@ -307,6 +311,7 @@ def interpret_notes(notes: List[str], scenario_id: str, battery_capacity_kwh: fl
                 prompt += f"Note {i}: {note}\n"
                 
             try:
+                logger.info(f"[{scenario_id}] Calling Google AI Studio / LLM model ({model}) for {len(misses)} notes...")
                 response = client.chat.completions.create(
                     model=model,
                     messages=[
