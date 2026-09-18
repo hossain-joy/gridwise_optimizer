@@ -272,9 +272,9 @@ def get_client():
                 
         if api_key:
             if base_url:
-                _client = OpenAI(api_key=api_key, base_url=base_url)
+                _client = OpenAI(api_key=api_key, base_url=base_url, max_retries=0, timeout=3.0)
             else:
-                _client = OpenAI(api_key=api_key)
+                _client = OpenAI(api_key=api_key, max_retries=0, timeout=3.0)
     return _client
 
 def interpret_notes(notes: List[str], scenario_id: str, battery_capacity_kwh: float = 500.0) -> List[dict]:
