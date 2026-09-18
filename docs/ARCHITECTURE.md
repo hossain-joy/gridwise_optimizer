@@ -4,51 +4,9 @@
 
 GridWise Energy Optimizer is a high-reliability, microservice-based optimization engine designed for the BUP CSE Fest Hackathon. It bridges untrusted natural language operational directives with deterministic linear programming to compute optimal 24-hour campus energy dispatch schedules.
 
-```
-+-----------------------------------------------------------------------------+
-|                                API Request                                  |
-|         (Scenario ID, 24h Demand, Solar, Tariffs, Battery, Notes)           |
-+-------------------------------------+---------------------------------------+
-                                      |
-                                      v
-+-----------------------------------------------------------------------------+
-| [Stage 1] LLM Interpreter & Prompt Cache                                    |
-|   - In-memory Normalized Note Cache                                         |
-|   - Primary Model (e.g. gpt-4o-mini, JSON Mode)                             |
-|   - Fallback Model (failover) & Deterministic Regex/NLP Extractor           |
-+-------------------------------------+---------------------------------------+
-                                      | Raw Directives Dict
-                                      v
-+-----------------------------------------------------------------------------+
-| [Stage 2] Guardrail Validator                                               |
-|   - Schema & Strict Key Verification                                        |
-|   - Time Window Bound Checks (0..23, Ascending, Start-Inclusive/End-Excl)   |
-|   - Parameter Bounds (Factor 0..1, Reserve <= Capacity, Grid Cap >= 0)      |
-|   - Deterministic Downgrade to `no_op` upon Violation                       |
-+-------------------------------------+---------------------------------------+
-                                      | Validated Directives & Active Limits
-                                      v
-+-----------------------------------------------------------------------------+
-| [Stage 3] Mathematical Optimizer (PuLP LP / CBC)                            |
-|   - Decision Variables: Grid, Solar Used, Charge, Discharge, Battery SoC    |
-|   - Objective: Minimize Total Cost + 1e-5 * Peak Grid (Tie-Breaker)         |
-|   - Physics Constraints: Energy Balance, SoC Transition, Neutrality         |
-+-------------------------------------+---------------------------------------+
-                                      | 24h Hourly Plan & Totals
-                                      v
-+-----------------------------------------------------------------------------+
-| [Stage 4] Replay Safety Validator                                           |
-|   - Independent Physical Recalculation & Assertion (TOL <= 0.01)            |
-|   - Total Cost, Total Grid kWh, and Peak Grid kWh Verification              |
-+-------------------------------------+---------------------------------------+
-                                      | Verified Plan
-                                      v
-+-----------------------------------------------------------------------------+
-| [Stage 5] Response Serialization                                            |
-|   - Conforms to Official Output Schema                                      |
-|   - Preserves null structured_adjustment for `no_op`                        |
-+-----------------------------------------------------------------------------+
-```
+<p align="center">
+  <img src="architecture.png" alt="GridWise Architecture Diagram" width="850">
+</p>
 
 ---
 

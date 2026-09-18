@@ -38,48 +38,9 @@ The system extracts the structured constraint (`hours: [12, 13]`, `factor: 0.25`
 
 GridWise is built on a **decoupled, multi-stage pipeline** ensuring that untrusted LLM outputs never directly influence the mathematical solver without strict validation.
 
-```
-                  ┌──────────────────────────────────────────────┐
-                  │      Operator Notes + 24-Hour Input Data     │
-                  └──────────────────────┬───────────────────────┘
-                                         │
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │          STAGE 1: LLM INTERPRETER            │
-                  │  • Gemini / OpenAI / Deterministic Fallback  │
-                  │  • In-Memory Prompt Caching (0ms latency)    │
-                  │  • Strict JSON Schema Formatting             │
-                  └──────────────────────┬───────────────────────┘
-                                         │
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │         STAGE 2: DETERMINISTIC GUARDRAILS    │
-                  │  • Enforces 0-23 hour bounds & time windows  │
-                  │  • Normalizes percentage factors (0.0 - 1.0) │
-                  │  • Downgrades invalid / non-ops to `no_op`   │
-                  └──────────────────────┬───────────────────────┘
-                                         │
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │       STAGE 3: LINEAR PROGRAMMING (LP)       │
-                  │  • Coin-OR CBC Mathematical Solver via PuLP  │
-                  │  • Global Cost Minimum Guarantee             │
-                  │  • Peak-shaving tie-breaker (ε = 1e-5)       │
-                  └──────────────────────┬───────────────────────┘
-                                         │
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │       STAGE 4: SAFETY REPLAY AUDITOR         │
-                  │  • Physical power conservation verification  │
-                  │  • Battery kinetic bounds & rate limits      │
-                  │  • End-of-Day SoC Neutrality (SoC_23 = SoC_0)│
-                  └──────────────────────┬───────────────────────┘
-                                         │
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │      200 OK JSON API & Visual Dashboard      │
-                  └──────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="docs/architecture.png" alt="GridWise Architecture Diagram" width="850">
+</p>
 
 ### 1. LLM Interpretation Layer
 Translates natural language notes into structured machine-actionable JSON directives.
