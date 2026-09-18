@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GridWise Energy Optimizer Demo</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background: #f9f9f9; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 200px; font-family: monospace; }
+        button { background: #007bff; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; margin-top: 10px; }
+        button:hover { background: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #f2f2f2; }
+        .result { margin-top: 20px; padding: 10px; background: #eef; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>GridWise Optimizer Demo</h2>
+        <p>Paste scenario JSON here or click "Run Optimization" for a test payload.</p>
+        <textarea id="payload"></textarea>
+        <button onclick="run()">Run Optimization</button>
+
+        <div id="loading" style="display:none; margin-top:10px;">Processing...</div>
+
+        <div id="output" style="display:none;">
+            <div class="result">
+                <strong>Cost:</strong> BDT <span id="cost"></span> | 
+                <strong>Total Grid:</strong> <span id="grid"></span> kWh |
+                <strong>Peak Grid:</strong> <span id="peak"></span> kWh
+            </div>
+            
+            <h3>Directive Interpretation</h3>
+            <table id="directives">
+                <tr><th>Note Index</th><th>Applies</th><th>Type</th><th>Explanation</th></tr>
+            </table>
+
+            <h3>Hourly Plan</h3>
+            <table id="plan">
+                <tr><th>Hour</th><th>Grid</th><th>Solar Used</th><th>Battery Action</th><th>Battery (kWh)</th><th>Battery After (kWh)</th></tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Sample payload
+        const sample = {
+            "scenario_id": "demo_scenario",
+            "operator_notes": ["Reduce solar to 50% between 13:00 and 15:00"],
+            "hours": Array.from({length: 24}, (_, i) => ({
+                hour: i, demand_kwh: 100, solar_kwh: (i>=8 && i<=16) ? 100 : 0, tariff_bdt_per_kwh: (i>=18 && i<=22) ? 20 : 10
+            })),
+            "battery": { capacity_kwh: 500, initial_energy_kwh: 200, minimum_energy_kwh: 50, max_charge_kwh_per_hour: 100, max_discharge_kwh_per_hour: 100 }
+        };
+        document.getElementById('payload').value = JSON.stringify(sample, null, 2);
+
+        async function run() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('output').style.display = 'none';
+            try {
+                const payload = JSON.parse(document.getElementById('payload').value);
+                const res = await fetch('/optimize-energy', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                if(!res.ok) { alert(JSON.stringify(data)); return; }
+
+                document.getElementById('cost').innerText = data.total_cost_bdt;
+                document.getElementById('grid').innerText = data.total_grid_kwh;
+                document.getElementById('peak').innerText = data.peak_grid_kwh;
+
+                const dirTable = document.getElementById('directives');
+                dirTable.innerHTML = '<tr><th>Note Index</th><th>Applies</th><th>Type</th><th>Explanation</th></tr>' + 
+                    data.directive_interpretation.map(d => `<tr><td>${d.note_index}</td><td>${d.applies}</td><td>${d.directive_type}</td><td>${d.explanation}</td></tr>`).join('');
+
+                const planTable = document.getElementById('plan');
+                planTable.innerHTML = '<tr><th>Hour</th><th>Grid</th><th>Solar Used</th><th>Battery Action</th><th>Battery (kWh)</th><th>Battery After (kWh)</th></tr>' + 
+                    data.hourly_plan.map(p => `<tr><td>${p.hour}</td><td>${p.grid_kwh}</td><td>${p.solar_used_kwh}</td><td>${p.battery_action}</td><td>${p.battery_kwh}</td><td>${p.battery_energy_after_kwh}</td></tr>`).join('');
+
+                document.getElementById('output').style.display = 'block';
+            } catch(e) {
+                alert(e);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
