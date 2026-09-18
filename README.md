@@ -306,15 +306,15 @@ pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment (Optional)
-Copy `.env.example` to `.env`:
+Copy `.env.example` to `.env` (Get a free API key from [Google AI Studio](https://aistudio.google.com/)):
 ```env
 PORT=8000
 LLM_PROVIDER=gemini
 LLM_MODEL=gemini-2.5-flash
-LLM_API_KEY=your_api_key_here
+LLM_API_KEY=your_google_ai_studio_api_key_here
 LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
 ```
-*(Note: If no API key is provided, the engine seamlessly uses the deterministic rule-based NLP extractor.)*
+*(Note: If no API key is provided or the connection is offline, the engine seamlessly uses the built-in deterministic rule-based NLP extractor with 0% failure rate.)*
 
 ### 3. Start Application
 ```bash

@@ -17,9 +17,11 @@ This guide provides step-by-step instructions for deploying the GridWise service
    - **Instance Type:** Free / Starter
 5. Under **Environment Variables**, add:
    - `PORT`: `8000`
-   - `LLM_PROVIDER`: `openai`
-   - `LLM_MODEL`: `gpt-4o-mini`
-   - `LLM_API_KEY`: `your-openai-api-key`
+   - `LLM_PROVIDER`: `gemini`
+   - `LLM_MODEL`: `gemini-2.5-flash`
+   - `LLM_API_KEY`: `your-google-ai-studio-api-key` (from https://aistudio.google.com/)
+   - `LLM_BASE_URL`: `https://generativelanguage.googleapis.com/v1beta/openai/`
+   *(Or leave empty to use the deterministic offline NLP fallback)*
 6. Click **Deploy Web Service**.
 7. Your public URL will be: `https://<service-name>.onrender.com`.
 
