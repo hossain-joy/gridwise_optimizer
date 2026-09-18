@@ -1,127 +1,415 @@
-# GridWise — LLM-Assisted Energy Optimizer (v2.0)
+# GridWise
+### AI-Powered Energy Management and Cost Optimization System
+*Natural language operator instructions to optimal 24-hour campus energy schedules.*
 
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com/)
 [![PuLP](https://img.shields.io/badge/PuLP-Linear%20Programming-orange.svg)](https://coin-or.github.io/pulp/)
 [![Live Cloud](https://img.shields.io/badge/Live%20Demo-Render-brightgreen.svg)](https://voltss.onrender.com/)
-[![Tests](https://img.shields.io/badge/Tests-100%20Passing%20(100%25)-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-100%2F100%20Passing%20(100%25)-brightgreen.svg)]()
 
-Production-grade, resilient FastAPI backend and interactive Dribbble-inspired SaaS dashboard for 24-hour campus energy schedule optimization. Designed for the **BUP CSE Fest 2026 Hackathon (Online Preliminary)**.
-
----
-
-## 🌐 Live Cloud Deployment
-
-- **Live Interactive Dashboard:** [https://voltss.onrender.com/](https://voltss.onrender.com/)
-- **Swagger OpenAPI Docs:** [https://voltss.onrender.com/docs](https://voltss.onrender.com/docs)
-- **Health Check Endpoint:** [https://voltss.onrender.com/health](https://voltss.onrender.com/health)
+[Overview](#overview) · [Architecture](#architecture) · [Optimization Model](#optimization-model) · [Complete Example](#complete-example) · [API Specification](#api-specification) · [Interactive Dashboard](#interactive-dashboard) · [Technology Stack](#️-technology-stack) · [Project Structure](#project-structure) · [Quick Start](#quick-start) · [Docker](#-docker-deployment) · [Verification Benchmarks](#-testing--benchmarks)
 
 ---
 
-## ⚡ Key Highlights
+## Overview
 
-- **Decoupled 5-Stage Architecture:** Strictly isolates untrusted LLM interpretation from deterministic mathematical linear programming and physical constraint validation.
-- **100% Benchmark Accuracy:** Validated against all 10 official public sample cases + 90 synthetic stress scenarios (100/100 passing, 2,400 hours physically verified) with zero error in directive interpretation, energy conservation, and cost minimization.
-- **Zero-Downtime Resilience:** Features dual-model failover, in-memory prompt caching (0ms hit latency), and an intelligent deterministic NLP fallback for offline execution.
-- **Optimal Tie-Breaking:** Employs a negligible peak penalty ($\epsilon = 10^{-5}$) to break dispatch ties across identical tariff hours, smoothing peak import while guaranteeing minimal cost.
-- **Physical Safety Replay:** Independently re-computes and asserts energy balance, battery limits, rate constraints, and end-of-day neutrality ($SoC_{23} = SoC_{initial}$) before responding.
-- **Interactive Modern UI/UX:** Dribbble-grade SaaS dashboard with 1-click scenario switching, Chart.js 24h stacked dispatch profile, live directives breakdown, table action filters, CSV/JSON data export, and keyboard shortcuts (`⌘K` / `Ctrl+Enter`).
+**GridWise** is a production-grade AI-powered Energy Management System designed to minimize the total financial cost of electricity imported from the national grid over a 24-hour operating horizon for a university campus.
+
+The system orchestrates three complementary energy sources:
+
+| Source | Characteristic | Role in System |
+| :--- | :--- | :--- |
+| **Grid** | Unlimited availability with dynamic time-of-use tariffs (BDT/kWh) | Baseline and peak backup power supplier |
+| **Solar PV** | Zero marginal cost, forecast-dependent generation profile | Primary clean generation source |
+| **Battery (BESS)** | Energy storage system with bounded charge/discharge rates & capacity | Temporal energy arbitrage (charges during cheap/solar hours, discharges during peak tariff hours) |
+
+The primary objective is to satisfy the facility's hourly load demand while strictly adhering to physical battery dynamics, solar constraints, grid intake limits, and operator directives.
+
+### Natural Language Operational Directives
+GridWise empowers dispatchers to specify operational constraints and maintenance windows using plain natural language. For instance:
+> *"Facilities will wash the rooftop solar panels from noon until 2 PM. During cleaning, usable solar should be treated as roughly 25% of the forecast."*
+
+The system extracts the structured constraint (`hours: [12, 13]`, `factor: 0.25`), validates it via deterministic guardrails, and incorporates it into the linear optimization model.
 
 ---
 
-## 📐 Architecture at a Glance
+## Architecture
+
+GridWise is built on a **decoupled, multi-stage pipeline** ensuring that untrusted LLM outputs never directly influence the mathematical solver without strict validation.
 
 ```
-Energy Data + Operator Notes
-        ↓
-[1] LLM Interpreter    → Extracts structured directive types (JSON mode, Cache, Offline NLP Fallback)
-        ↓
-[2] Guardrail Validator → Pure Python validation: enforces bounds & downgrades invalid outputs to `no_op`
-        ↓
-[3] Math Optimizer      → PuLP Linear Programming (CBC solver) guarantees global minimum cost
-        ↓
-[4] Final Validator     → Safety replay layer verifying physical constraints & energy balance (TOL <= 0.01)
-        ↓
-API Response (200 OK)
+                  ┌──────────────────────────────────────────────┐
+                  │      Operator Notes + 24-Hour Input Data     │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │          STAGE 1: LLM INTERPRETER            │
+                  │  • Gemini / OpenAI / Deterministic Fallback  │
+                  │  • In-Memory Prompt Caching (0ms latency)    │
+                  │  • Strict JSON Schema Formatting             │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │         STAGE 2: DETERMINISTIC GUARDRAILS    │
+                  │  • Enforces 0-23 hour bounds & time windows  │
+                  │  • Normalizes percentage factors (0.0 - 1.0) │
+                  │  • Downgrades invalid / non-ops to `no_op`   │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │       STAGE 3: LINEAR PROGRAMMING (LP)       │
+                  │  • Coin-OR CBC Mathematical Solver via PuLP  │
+                  │  • Global Cost Minimum Guarantee             │
+                  │  • Peak-shaving tie-breaker (ε = 1e-5)       │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │       STAGE 4: SAFETY REPLAY AUDITOR         │
+                  │  • Physical power conservation verification  │
+                  │  • Battery kinetic bounds & rate limits      │
+                  │  • End-of-Day SoC Neutrality (SoC_23 = SoC_0)│
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │      200 OK JSON API & Visual Dashboard      │
+                  └──────────────────────────────────────────────┘
+```
+
+### 1. LLM Interpretation Layer
+Translates natural language notes into structured machine-actionable JSON directives.
+
+| Directive Type | Description | Structured Payload Shape |
+| :--- | :--- | :--- |
+| `solar_reduction` | Scales down effective usable solar generation | `{"hours": [h1, h2], "factor": 0.0 - 1.0}` |
+| `minimum_battery_reserve` | Enforces an emergency battery reserve | `{"hours": [...], "minimum_energy_kwh": float}` |
+| `no_charge_window` | Prohibits battery charging during maintenance | `{"hours": [...]}` |
+| `no_discharge_window` | Prohibits battery discharging during testing | `{"hours": [...]}` |
+| `max_grid_window` | Caps grid import during substation constraints | `{"hours": [...], "max_grid_kwh": float}` |
+| `no_op` | Irrelevant announcement / distractor note | `null` (`applies: false`) |
+
+### 2. Deterministic Guardrails
+- Validates all time ranges to strictly start-inclusive, end-exclusive `[start, end)` subsets within `[0, 23]`.
+- Normalizes reduction percentages (e.g. *"80% reduction"* $\to$ `factor: 0.20`, *"drops to 25%"* $\to$ `factor: 0.25`).
+- Converts capacity percentages to absolute kWh values (e.g. *"50% of 200 kWh battery"* $\to$ `100.0 kWh`).
+- Automatically neutralizes invalid directives or hallucinations into `no_op`.
+
+### 3. Coin-OR CBC Linear Optimization
+Solves the exact continuous linear program for all 24 hours in $< 50\text{ ms}$, ensuring true mathematical cost minimization without heuristic approximations.
+
+### 4. Safety Replay Engine
+Re-evaluates every hourly decision before returning output:
+- Verifies power balance: $P_{\text{grid}} + P_{\text{solar}} + P_{\text{dis}} = D + P_{\text{ch}}$.
+- Verifies rate limits: $P_{\text{ch}} \le P_{\text{ch}}^{\max}, P_{\text{dis}} \le P_{\text{dis}}^{\max}$.
+- Verifies storage bounds: $E_{\min, t} \le \text{SoC}_t \le C$.
+- Verifies end-of-day neutrality: $\text{SoC}_{23} = \text{SoC}_{\text{initial}}$.
+
+---
+
+## Optimization Model
+
+### Objective Function
+Minimize total 24-hour financial cost of imported electricity from the national grid, with a secondary peak-shaving tie-breaker ($\epsilon = 10^{-5}$):
+
+$$\min \sum_{h=0}^{23} \left( \text{Grid}_h \times \text{Tariff}_h \right) + \epsilon \cdot \text{PeakGrid}$$
+
+where:
+- $\text{Grid}_h \ge 0$ is the grid energy imported during hour $h$ (kWh).
+- $\text{Tariff}_h$ is the time-of-use tariff rate during hour $h$ (BDT/kWh).
+- $\text{PeakGrid} \ge \text{Grid}_h \quad \forall h \in [0, 23]$.
+
+### 1. Hourly Energy Balance
+For every hour $h \in [0, 23]$, energy supply must strictly equal energy consumption:
+
+$$\text{Grid}_h + \text{SolarUsed}_h + \text{Discharge}_h = \text{Demand}_h + \text{Charge}_h$$
+
+### 2. Solar Availability Constraints
+$$\text{SolarUsed}_h \le \text{SolarEffective}_h = \text{SolarForecast}_h \times \text{Factor}_h$$
+
+### 3. Battery Storage Dynamics & Limits
+$$\text{SoC}_h = \text{SoC}_{h-1} + \text{Charge}_h - \text{Discharge}_h \quad (\text{where } \text{SoC}_{-1} = \text{InitialEnergy})$$
+
+$$\text{ActiveMinReserve}_h \le \text{SoC}_h \le \text{Capacity}$$
+
+$$0 \le \text{Charge}_h \le \text{MaxChargeRate} \times \mathbb{I}(\text{ChargeAllowed}_h)$$
+
+$$0 \le \text{Discharge}_h \le \text{MaxDischargeRate} \times \mathbb{I}(\text{DischargeAllowed}_h)$$
+
+### 4. End-of-Day Neutrality
+$$\text{SoC}_{23} = \text{InitialEnergy}$$
+
+*Ensures sustainable cyclic operation without battery depletion.*
+
+---
+
+## Complete Example
+
+**Operator Notes:**
+1. *"Facilities will wash the rooftop solar panels from noon until 2 PM. During cleaning, usable solar should be treated as roughly 25% of the forecast."*
+2. *"The sports office moved next month's registration deadline."*
+
+**1. LLM + Guardrails Interpretation:**
+```json
+[
+  {
+    "note_index": 0,
+    "applies": true,
+    "directive_type": "solar_reduction",
+    "structured_adjustment": { "hours": [12, 13], "factor": 0.25 },
+    "explanation": "Solar availability is reduced to 25% during the panel-cleaning window."
+  },
+  {
+    "note_index": 1,
+    "applies": false,
+    "directive_type": "no_op",
+    "structured_adjustment": null,
+    "explanation": "This note does not affect today's 24-hour energy schedule."
+  }
+]
+```
+
+**2. Schedule Execution:**
+- Hours 12 & 13 solar forecast ($180\text{ kWh}, 170\text{ kWh}$) scaled down to $45\text{ kWh}$ and $42.5\text{ kWh}$.
+- The battery shifts charging to cheap early-morning tariff periods (Hours 2–4 @ 5 BDT/kWh) and discharges during expensive evening peak periods (Hours 18–20 @ 28–30 BDT/kWh).
+- Final battery SoC at Hour 23 returns exactly to initial $110.0\text{ kWh}$. Total cost: **38,365.00 BDT**.
+
+---
+
+## API Specification
+
+### 1. Health Probe
+`GET /health`
+```json
+{
+  "status": "ok"
+}
+```
+
+### 2. Energy Optimization Endpoint
+`POST /optimize-energy`
+
+#### Request Payload
+```json
+{
+  "scenario_id": "SAMPLE-01",
+  "operator_notes": [
+    "Facilities will wash the rooftop solar panels from noon until 2 PM. During cleaning, usable solar should be treated as roughly 25% of the forecast.",
+    "The sports office moved next month's registration deadline."
+  ],
+  "hours": [
+    { "hour": 0, "demand_kwh": 90, "solar_kwh": 0, "tariff_bdt_per_kwh": 6 },
+    ...
+    { "hour": 23, "demand_kwh": 105, "solar_kwh": 0, "tariff_bdt_per_kwh": 7 }
+  ],
+  "battery": {
+    "capacity_kwh": 220,
+    "initial_energy_kwh": 110,
+    "minimum_energy_kwh": 40,
+    "max_charge_kwh_per_hour": 50,
+    "max_discharge_kwh_per_hour": 50
+  }
+}
+```
+
+#### Response Payload (100% Problem Statement v2.0 Compliant)
+```json
+{
+  "scenario_id": "SAMPLE-01",
+  "directive_interpretation": [
+    {
+      "note_index": 0,
+      "applies": true,
+      "directive_type": "solar_reduction",
+      "structured_adjustment": { "hours": [12, 13], "factor": 0.25 },
+      "explanation": "Solar availability is reduced to 25% during the panel-cleaning window."
+    },
+    {
+      "note_index": 1,
+      "applies": false,
+      "directive_type": "no_op",
+      "structured_adjustment": null,
+      "explanation": "This note does not affect today's 24-hour energy schedule."
+    }
+  ],
+  "hourly_plan": [
+    {
+      "hour": 0,
+      "grid_kwh": 90.0,
+      "solar_used_kwh": 0.0,
+      "battery_action": "idle",
+      "battery_kwh": 0.0,
+      "battery_energy_after_kwh": 110.0
+    },
+    ...
+  ],
+  "total_grid_kwh": 2692.5,
+  "total_cost_bdt": 38365.0,
+  "peak_grid_kwh": 175.0,
+  "plan_summary": "Uses the reduced midday solar availability, ignores the unrelated note, and shifts battery energy toward higher-tariff hours while restoring the initial battery level."
+}
 ```
 
 ---
 
-## 📚 Documentation Index
+## 🎨 Interactive Dashboard
 
-- [**System Architecture (`docs/ARCHITECTURE.md`)**](docs/ARCHITECTURE.md): In-depth 5-stage pipeline walkthrough, LP mathematical formulation, and caching mechanics.
-- [**Directives Specification (`docs/DIRECTIVES_SPEC.md`)**](docs/DIRECTIVES_SPEC.md): Complete schema, semantics, and time window rules for all 6 directives.
-- [**API Reference (`docs/API_REFERENCE.md`)**](docs/API_REFERENCE.md): Full endpoint specs, request/response models, status codes, and code examples.
-- [**Testing & Benchmarks (`docs/TESTING_AND_BENCHMARKS.md`)**](docs/TESTING_AND_BENCHMARKS.md): Full test suite instructions, benchmark outputs, and compliance checklists.
-- [**Deployment Guide (`docs/DEPLOYMENT_GUIDE.md`)**](docs/DEPLOYMENT_GUIDE.md): Complete guide for Docker, Render, and cloud hosting.
+Access the live visual interface at **[https://voltss.onrender.com/](https://voltss.onrender.com/)** or locally at `http://localhost:8000/`.
+
+- **Dribbble Modern SaaS Layout:** Styled with dark forest green (`#052e16`) theme, clean metric cards, and responsive sidebar.
+- **1-Click Scenario Switching:** Embedded database with all 10 official test cases.
+- **Stacked 24-Hour Dispatch Chart:** Real-time Chart.js visualizer for Grid, Solar, Battery Charge/Discharge, and SoC curve.
+- **Directives & Schedule Data:** Filterable schedule table (Charge, Discharge, Solar) + CSV & JSON one-click export.
+- **Keyboard Shortcuts:** `⌘K` / `Ctrl+K` (Scenario Switcher), `Ctrl+Enter` (Run Optimization).
 
 ---
 
-## 🚀 Quickstart
+## 🛠️ Technology Stack
 
-### 1. Prerequisites
-- Python 3.11+
-- `coinor-cbc` solver (included in Docker or via system package manager: `brew install cbc` on macOS, `apt install coinor-cbc` on Linux)
+| Layer | Component | Purpose |
+| :--- | :--- | :--- |
+| **Web & API Framework** | **FastAPI** (Python 3.11+) | High-throughput asynchronous REST API with auto OpenAPI docs |
+| **AI / NLP Interpretation** | **Google Gemini / OpenAI / Llama** | Semantic parsing of unstructured natural language shift notes |
+| **Validation & Schemas** | **Pydantic v2** | Strict deterministic type validation and schema enforcement |
+| **Optimization Modeling** | **PuLP** | Mathematical linear programming modeling framework |
+| **Underlying LP Solver** | **Coin-OR CBC** | High-performance open-source simplex & branch-and-bound solver |
+| **Frontend UI / UX** | **TailwindCSS + Chart.js** | Interactive responsive dashboard with stacked dispatch charts |
+| **Containerization** | **Docker + Multi-Stage Build** | Consistent, reproducible environment across OS platforms |
+| **Hosting & Cloud** | **Render Cloud Platform** | Zero-downtime auto-deployments linked to GitHub `main` |
 
-### 2. Environment Setup
+---
+
+## Project Structure
+
+```
+gridwise_optimizer/
+├── app/
+│   ├── __init__.py
+│   ├── main.py                  # FastAPI application & route definitions
+│   ├── models.py                # Pydantic request/response schemas
+│   ├── llm_interpreter.py       # LLM translation, prompt caching & deterministic NLP
+│   ├── guardrail.py             # Deterministic validation & bound enforcement
+│   ├── optimizer.py             # PuLP Coin-OR CBC linear programming solver
+│   ├── replay.py                # Safety replay auditor & energy balance validator
+│   └── demo.html                # Interactive modern Dribbble-grade dashboard
+├── docs/
+│   ├── ARCHITECTURE.md          # Detailed 5-stage pipeline & mathematical formulation
+│   ├── DIRECTIVES_SPEC.md       # Full directive types & validation specifications
+│   ├── API_REFERENCE.md         # Complete endpoint documentation with examples
+│   ├── TESTING_AND_BENCHMARKS.md# Full test suite output & verification matrices
+│   └── DEPLOYMENT_GUIDE.md      # Docker & Render deployment instructions
+├── tests/
+│   ├── sample_cases.json        # 10 official public sample cases from competition pack
+│   ├── extended_cases.json      # 20 synthetic edge cases
+│   ├── test_api.py              # Health check & endpoint validation
+│   ├── test_optimizer.py        # Solver optimality & tie-breaker tests
+│   ├── test_guardrail.py        # Deterministic guardrail bound tests
+│   ├── test_directives.py       # LLM prompt & heuristic interpretation tests
+│   ├── test_fuzz.py             # Edge-case & invalid payload fuzzing tests
+│   ├── test_sample_pack.py      # End-to-end official sample pack test suite
+│   ├── test_all_30_cases.py     # 30-case full benchmark test
+│   ├── test_100_scenarios.py    # 100-scenario automated stress & replay audit
+│   └── run_official_sample_evaluation.py # Official 10-case evaluation audit runner
+├── Dockerfile                   # Multi-stage production container definition
+├── docker-compose.yml           # Local multi-container orchestration
+├── requirements.txt             # Locked Python dependencies
+├── .env.example                 # Environment variable template
+├── .gitignore                   # Git exclusion rules (secrets & caches)
+└── README.md                    # System documentation & quickstart guide
+```
+
+---
+
+## 🚀 Quick Start
+
+### 1. Local Installation
+
 ```bash
-# Clone and enter directory
+# 1. Clone repository
 git clone https://github.com/hossain-joy/gridwise_optimizer.git
 cd gridwise_optimizer
 
-# Create and activate virtual environment
+# 2. Set up virtual environment
 python -m venv venv
-# On Windows:
+# On Windows PowerShell:
 .\venv\Scripts\Activate.ps1
-# On Linux/macOS:
+# On Linux / macOS:
 source venv/bin/activate
 
-# Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Environment Variables (Optional for LLM Mode)
+### 2. Configure Environment (Optional)
 Copy `.env.example` to `.env`:
 ```env
 PORT=8000
 LLM_PROVIDER=gemini
 LLM_MODEL=gemini-2.5-flash
-LLM_API_KEY=your_gemini_api_key_here
+LLM_API_KEY=your_api_key_here
 LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
 ```
-*(Note: If `LLM_API_KEY` is not provided, the service automatically utilizes the deterministic NLP fallback extractor.)*
+*(Note: If no API key is provided, the engine seamlessly uses the deterministic rule-based NLP extractor.)*
 
-### 4. Start Server
+### 3. Start Application
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-- API Docs: `http://localhost:8000/docs`
 - Interactive Dashboard: `http://localhost:8000/` or `http://localhost:8000/demo`
+- Swagger Documentation: `http://localhost:8000/docs`
 - Health Probe: `http://localhost:8000/health`
-
----
-
-## 🧪 Running the Automated Test Suites
-
-```bash
-# 1. Run all unit, fuzz, guardrail, and sample pack integration tests (53 tests)
-python -m pytest tests/ -v
-
-# 2. Run the 10-case official sample evaluation benchmark
-python -m tests.run_official_sample_evaluation
-
-# 3. Run the 100-scenario comprehensive stress & physical replay audit (2,400 hours)
-python -m tests.test_100_scenarios
-```
 
 ---
 
 ## 🐳 Docker Deployment
 
+### Build and Run Locally
 ```bash
-# Build image
+# Build Docker image
 docker build -t gridwise-optimizer .
 
-# Run container
+# Run container on port 8000
 docker run -d -p 8000:8000 --name gridwise gridwise-optimizer
 ```
+
+### Docker Compose
+```bash
+docker compose up -d
+```
+
+---
+
+## 🧪 Testing & Benchmarks
+
+```bash
+# 1. Run all 53 unit, integration, and fuzz test suites
+python -m pytest tests/ -v
+
+# 2. Run the Official 10-Sample Public Benchmark Evaluation
+python -m tests.run_official_sample_evaluation
+
+# 3. Run the 100-Scenario Comprehensive Stress & Physical Replay Audit (2,400 hours)
+python -m tests.test_100_scenarios
+```
+
+### Benchmark Summary
+
+| Test Suite | Scope | Energy Balance | Battery Bounds | Cost Parity | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Official Public Pack** | 10 Scenarios | 100% Conserved | 100% Compliant | $\Delta = 0.00\text{ BDT}$ | **PASS** ✅ |
+| **Extended Synthetic Suite** | 20 Scenarios | 100% Conserved | 100% Compliant | Optimal | **PASS** ✅ |
+| **100-Case Stress Audit** | 100 Scenarios (2,400h) | 100% Conserved | 100% Compliant | Optimal | **PASS** ✅ |
+| **Pytest Full Suite** | 53 Test Cases | 100% Conserved | 100% Compliant | 0 Failures | **PASS** ✅ |
+
+---
+
+## 👥 Competition Details
+
+- **Event:** BUP CSE Fest 2026 · Hackathon · Online Preliminary Round
+- **Challenge:** Smart Campus Energy Optimization (GridWise LLM)
+- **Live Deployment:** [https://voltss.onrender.com/](https://voltss.onrender.com/)
+- **Repository:** [https://github.com/hossain-joy/gridwise_optimizer](https://github.com/hossain-joy/gridwise_optimizer)
